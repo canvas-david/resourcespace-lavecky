@@ -74,36 +74,13 @@ if [ "$TABLE_EXISTS" = "0" ]; then
         " 2>/dev/null || echo "[entrypoint] PHP init skipped"
     fi
     
-    # Create default admin user using ResourceSpace's own functions
+    # Create default admin user with MD5 password hash
     echo "[entrypoint] Creating default admin user..."
-    cd /var/www/html
-    php -r "
-        include 'include/db.php';
-        include 'include/general_functions.php';
-        
-        // Check if admin exists
-        \$exists = sql_value(\"SELECT ref FROM user WHERE username='admin'\", 0);
-        if (\$exists == 0) {
-            // Use RS's password hash function
-            \$hash = hash('sha256', 'admin');
-            sql_query(\"INSERT INTO user (username, password, fullname, email, usergroup, created, approved) 
-                       VALUES ('admin', '\" . \$hash . \"', 'Administrator', '${RS_EMAIL_NOTIFY}', 3, NOW(), 1)\");
-            echo 'Admin user created';
-        } else {
-            // Reset password for existing admin
-            \$hash = hash('sha256', 'admin');
-            sql_query(\"UPDATE user SET password='\" . \$hash . \"' WHERE username='admin'\");
-            echo 'Admin password reset';
-        }
-    " 2>&1 || echo "[entrypoint] Admin user setup via PHP failed, trying direct SQL..."
-    
-    # Fallback: try direct SQL with SHA256 (ResourceSpace default)
-    ADMIN_HASH=$(echo -n "admin" | sha256sum | cut -d' ' -f1)
     mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
         INSERT INTO user (username, password, fullname, email, usergroup, created, approved)
-        VALUES ('admin', '${ADMIN_HASH}', 'Administrator', '${RS_EMAIL_NOTIFY}', 3, NOW(), 1)
-        ON DUPLICATE KEY UPDATE password='${ADMIN_HASH}';
-    " 2>/dev/null || echo "[entrypoint] Direct SQL admin setup completed"
+        VALUES ('admin', MD5('admin'), 'Administrator', '${RS_EMAIL_NOTIFY:-admin@localhost}', 3, NOW(), 1)
+        ON DUPLICATE KEY UPDATE password=MD5('admin');
+    " 2>/dev/null && echo "[entrypoint] Admin user created" || echo "[entrypoint] Admin user may exist"
     
     echo "[entrypoint] Database initialization complete"
     echo "[entrypoint] ⚠️  DEFAULT LOGIN: admin / admin - CHANGE PASSWORD IMMEDIATELY"
@@ -111,13 +88,13 @@ else
     echo "[entrypoint] Database already initialized (user table exists)"
 fi
 
-# Always ensure admin user exists with known password (SHA256 of 'admin')
-ADMIN_HASH=$(echo -n "admin" | sha256sum | cut -d' ' -f1)
+# Always ensure admin user exists with known password
+# ResourceSpace uses MySQL's PASSWORD() function for hashing
 echo "[entrypoint] Ensuring admin user exists with default password..."
 mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
     INSERT INTO user (username, password, fullname, email, usergroup, created, approved)
-    VALUES ('admin', '${ADMIN_HASH}', 'Administrator', '${RS_EMAIL_NOTIFY:-admin@localhost}', 3, NOW(), 1)
-    ON DUPLICATE KEY UPDATE password='${ADMIN_HASH}';
+    VALUES ('admin', MD5('admin'), 'Administrator', '${RS_EMAIL_NOTIFY:-admin@localhost}', 3, NOW(), 1)
+    ON DUPLICATE KEY UPDATE password=MD5('admin');
 " 2>/dev/null && echo "[entrypoint] Admin user ready (admin/admin)" || echo "[entrypoint] Admin check completed"
 
 # Start cron service
