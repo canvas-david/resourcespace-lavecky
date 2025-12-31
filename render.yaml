@@ -31,7 +31,10 @@ services:
     healthCheckPath: /login.php
     envVars:
       - key: DB_HOST
-        value: mysql
+        fromService:
+          name: mysql
+          type: pserv
+          property: host
       - key: DB_USER
         value: resourcespace
       - key: DB_PASS
@@ -62,7 +65,10 @@ services:
     plan: starter
     envVars:
       - key: FACES_DB_HOST
-        value: mysql
+        fromService:
+          name: mysql
+          type: pserv
+          property: host
       - key: FACES_DB_USER
         value: resourcespace
       - key: FACES_DB_PASS
