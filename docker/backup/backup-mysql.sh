@@ -32,7 +32,7 @@ openssl enc -aes-256-cbc -salt -pbkdf2 \
 # Configure AWS CLI for R2
 export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
-R2_ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+R2_ENDPOINT="https://${R2_ACCOUNT_ID}.eu.r2.cloudflarestorage.com"
 
 # Upload to R2 using AWS CLI (S3-compatible)
 echo "[backup] Uploading to R2..."
