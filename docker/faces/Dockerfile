@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 LABEL org.opencontainers.image.description="ResourceSpace AI Faces (InsightFace) Service"
 
-# Install system dependencies for OpenCV headless and InsightFace compilation
+# Install system dependencies for OpenCV headless and compilation
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
@@ -10,16 +10,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --no-cache-dir \
-    fastapi \
-    uvicorn \
-    insightface \
-    onnxruntime \
-    faiss-cpu \
-    opencv-python-headless \
-    python-multipart \
-    mysql-connector-python
+# Install Python dependencies in stages to reduce peak memory
+RUN pip install --no-cache-dir numpy==1.26.4 cython
+RUN pip install --no-cache-dir onnxruntime
+RUN pip install --no-cache-dir opencv-python-headless
+RUN pip install --no-cache-dir faiss-cpu
+RUN pip install --no-cache-dir insightface
+RUN pip install --no-cache-dir fastapi uvicorn python-multipart mysql-connector-python
 
 WORKDIR /app
 
