@@ -34,7 +34,7 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `docker-compose.yaml` | Local development stack |
 | `render.yaml` | Render.com production deployment |
 | `docker/config.php.template` | Config template with env var placeholders |
-| `entrypoint.sh` | Generates config.php at runtime |
+| `entrypoint.sh` | Generates config.php, auto-inits DB, creates admin user |
 | `docker/mysql/` | MySQL container for Render |
 | `docker/backup/` | Backup cron job with R2 upload |
 | `docker/faces/` | InsightFace AI service |
@@ -44,7 +44,24 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 ## Critical Rules
 
 ### scramble_key
-**NEVER change `RS_SCRAMBLE_KEY` after files are uploaded.** This key generates file storage paths. Changing it makes all existing files inaccessible.
+**NEVER change `RS_SCRAMBLE_KEY` after files are uploaded.** This key generates file storage paths AND is used in password hashing. Changing it makes:
+- All existing files inaccessible
+- All user passwords invalid
+
+### Password Hashing
+ResourceSpace uses a multi-layer password hash:
+```
+password_hash(hash_hmac('sha256', 'RS{username}{password}', scramble_key), PASSWORD_DEFAULT)
+```
+
+To manually set a user password:
+```bash
+# Generate hash (run on resourcespace container)
+php -r "include '/var/www/html/include/config.php'; \$pass = hash_hmac('sha256', 'RS{USERNAME}{PASSWORD}', \$scramble_key); echo password_hash(\$pass, PASSWORD_DEFAULT) . PHP_EOL;"
+
+# Update in database
+mysql -h mysql-xbeu -u resourcespace -p resourcespace -e "UPDATE user SET password='HASH_HERE' WHERE username='USERNAME';"
+```
 
 ### Transcription Field Mutability
 The sync_transcription.py enforces archival integrity:
@@ -68,10 +85,14 @@ docker compose up -d
 ```
 
 ### Deploy to Render
-1. Set secrets in Render dashboard (see README.md)
+1. Set secrets in Render dashboard (see README.md):
+   - `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD` on mysql service
+   - `RS_SCRAMBLE_KEY`, `RS_BASE_URL`, `RS_EMAIL_*` on resourcespace service
 2. Push to trigger auto-deploy
-3. Create backup user in MySQL
-4. Run setup wizard at `/pages/setup.php`
+3. Database auto-initializes on first run (no setup wizard needed)
+4. Login with `admin` / `admin` and change password immediately
+5. Create backup user in MySQL for backups
+6. Configure AI Faces plugin URL: `http://faces:8001`
 
 ### Sync Transcriptions
 ```bash
@@ -94,10 +115,13 @@ python scripts/sync_transcription.py --resource-id 123 --status
 - `RS_EMAIL_FROM`, `RS_EMAIL_NOTIFY`
 
 ### Render-Specific Secrets
-- `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`
-- `BACKUP_DB_PASS`, `BACKUP_ENCRYPTION_KEY`
-- `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID`, `R2_BUCKET`
-- `FACES_DB_PASS`
+- `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD` (mysql service)
+- `BACKUP_DB_PASS`, `BACKUP_ENCRYPTION_KEY` (mysql-backup cron)
+- `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID`, `R2_BUCKET` (mysql-backup cron)
+
+**Auto-linked via `fromService` in render.yaml:**
+- `DB_HOST`, `DB_PASS` (resourcespace ← mysql)
+- `FACES_DB_HOST`, `FACES_DB_PASS` (faces ← mysql)
 
 ### Transcription Sync
 - `RS_API_KEY` - Required for sync_transcription.py

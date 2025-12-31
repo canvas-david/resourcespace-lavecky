@@ -52,31 +52,53 @@ ResourceSpace uses this key to generate file storage paths. Changing it will mak
 
 The `render.yaml` blueprint deploys four services:
 
-1. **MySQL Private Service** - Database with persistent storage
-2. **ResourceSpace Web Service** - PHP application with filestore disk
-3. **AI Faces Private Service** - InsightFace facial recognition
+1. **MySQL Private Service** (`starter`) - Database with persistent storage
+2. **ResourceSpace Web Service** (`starter`) - PHP application with filestore disk
+3. **AI Faces Private Service** (`standard`) - InsightFace facial recognition (requires 2GB RAM)
 4. **MySQL Backup Cron Job** - Daily encrypted backups to Cloudflare R2
 
 ### Required Secrets
 
 Set these in the Render dashboard before deployment:
 
-| Secret | Purpose | Generation |
+| Secret | Service | Generation |
 |--------|---------|------------|
-| `MYSQL_ROOT_PASSWORD` | MySQL root access | `openssl rand -hex 32` |
-| `MYSQL_PASSWORD` | Application DB password | `openssl rand -hex 32` |
-| `DB_PASS` | Same as MYSQL_PASSWORD | (copy value) |
-| `RS_SCRAMBLE_KEY` | File path encryption | `openssl rand -hex 32` |
-| `RS_BASE_URL` | Your Render URL | `https://resourcespace-xxx.onrender.com` |
-| `FACES_DB_PASS` | Faces service DB access | Same as MYSQL_PASSWORD |
-| `BACKUP_DB_PASS` | Backup user password | `openssl rand -hex 32` |
-| `BACKUP_ENCRYPTION_KEY` | Backup encryption | `openssl rand -hex 32` |
-| `R2_ACCESS_KEY_ID` | Cloudflare R2 access | From Cloudflare dashboard |
-| `R2_SECRET_ACCESS_KEY` | Cloudflare R2 secret | From Cloudflare dashboard |
-| `R2_ACCOUNT_ID` | Cloudflare account ID | From Cloudflare dashboard |
-| `R2_BUCKET` | R2 bucket name | Your bucket name |
+| `MYSQL_ROOT_PASSWORD` | mysql | `openssl rand -hex 32` |
+| `MYSQL_PASSWORD` | mysql | `openssl rand -hex 32` |
+| `RS_SCRAMBLE_KEY` | resourcespace | `openssl rand -hex 32` |
+| `RS_BASE_URL` | resourcespace | `https://your-app.onrender.com` |
+| `RS_EMAIL_FROM` | resourcespace | `noreply@example.com` |
+| `RS_EMAIL_NOTIFY` | resourcespace | `admin@example.com` |
+| `BACKUP_DB_PASS` | mysql-backup | `openssl rand -hex 32` |
+| `BACKUP_ENCRYPTION_KEY` | mysql-backup | `openssl rand -hex 32` |
+| `R2_ACCESS_KEY_ID` | mysql-backup | From Cloudflare dashboard |
+| `R2_SECRET_ACCESS_KEY` | mysql-backup | From Cloudflare dashboard |
+| `R2_ACCOUNT_ID` | mysql-backup | From Cloudflare dashboard |
+| `R2_BUCKET` | mysql-backup | Your bucket name |
+
+**Auto-linked via `fromService`:**
+- `DB_HOST` → mysql internal hostname
+- `DB_PASS` → mysql `MYSQL_PASSWORD`
+- `FACES_DB_HOST` → mysql internal hostname
+- `FACES_DB_PASS` → mysql `MYSQL_PASSWORD`
 
 ### Post-Deployment Setup
+
+The entrypoint **automatically**:
+- Waits for MySQL connectivity
+- Loads database schema on first run
+- Runs all migrations
+- Creates default admin user
+
+**Default Login:**
+| Field | Value |
+|-------|-------|
+| Username | `admin` |
+| Password | `admin` |
+
+⚠️ **Change the admin password immediately** after first login.
+
+**Additional Steps:**
 
 1. Create backup user in MySQL:
    ```sql
@@ -85,7 +107,8 @@ Set these in the Render dashboard before deployment:
    FLUSH PRIVILEGES;
    ```
 
-2. Run ResourceSpace setup wizard at `/pages/setup.php`
+2. Configure AI Faces plugin (Admin → Plugins → Faces):
+   - Service URL: `http://faces:8001`
 
 3. Verify backup runs and uploads to R2
 
