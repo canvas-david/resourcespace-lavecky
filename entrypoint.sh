@@ -7,7 +7,8 @@ CONFIG_TARGET="/var/www/html/include/config.php"
 
 if [ -f "$CONFIG_TEMPLATE" ]; then
     echo "[entrypoint] Generating config.php from environment..."
-    envsubst < "$CONFIG_TEMPLATE" > "$CONFIG_TARGET"
+    # Only substitute specific env vars (not PHP $variables)
+    envsubst '${DB_HOST} ${DB_USER} ${DB_PASS} ${DB_NAME} ${RS_BASE_URL} ${RS_SCRAMBLE_KEY} ${RS_EMAIL_FROM} ${RS_EMAIL_NOTIFY}' < "$CONFIG_TEMPLATE" > "$CONFIG_TARGET"
     chmod 644 "$CONFIG_TARGET"
 else
     echo "[entrypoint] ERROR: Config template not found at $CONFIG_TEMPLATE"
