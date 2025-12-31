@@ -12,6 +12,12 @@ $scramble_key = '${RS_SCRAMBLE_KEY}';
 // Storage
 $storagedir = '/var/www/html/filestore';
 
+// External tool paths (installed in container)
+$imagemagick_path = '/usr/bin';
+$ghostscript_path = '/usr/bin';
+$ffmpeg_path = '/usr/bin';
+$exiftool_path = '/usr/bin';
+
 // Features
 $enable_api = true;
 $email_from = '${RS_EMAIL_FROM}';

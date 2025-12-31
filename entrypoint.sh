@@ -100,6 +100,19 @@ php -r "
     check_db_structs();
 " 2>/dev/null && echo "[entrypoint] Migrations complete" || echo "[entrypoint] Migration check skipped"
 
+# Fix filestore permissions (critical for uploads)
+echo "[entrypoint] Setting filestore permissions..."
+mkdir -p /var/www/html/filestore
+chown -R www-data:www-data /var/www/html/filestore
+chmod 755 /var/www/html/filestore
+
+# Fix homeanim permissions (for slideshow feature)
+mkdir -p /var/www/html/gfx/homeanim/gfx
+chown -R www-data:www-data /var/www/html/gfx/homeanim
+chmod 755 /var/www/html/gfx/homeanim/gfx
+
+echo "[entrypoint] Permissions set"
+
 # Start cron service
 service cron start
 
