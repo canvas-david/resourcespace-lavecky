@@ -22,7 +22,8 @@ Docker-based deployment for ResourceSpace DAM with environment-driven configurat
    ```
 
 4. **Access ResourceSpace:**
-   Open http://localhost:8080
+   - Application: http://localhost:8080
+   - MinIO Console: http://localhost:9001 (admin: minioadmin/minioadmin)
 
 ## Configuration
 
@@ -49,11 +50,12 @@ ResourceSpace uses this key to generate file storage paths. Changing it will mak
 
 ## Deployment to Render
 
-The `render.yaml` blueprint deploys three services:
+The `render.yaml` blueprint deploys four services:
 
 1. **MySQL Private Service** - Database with persistent storage
-2. **ResourceSpace Web Service** - PHP application
-3. **MySQL Backup Cron Job** - Daily encrypted backups to Cloudflare R2
+2. **ResourceSpace Web Service** - PHP application with filestore disk
+3. **AI Faces Private Service** - InsightFace facial recognition
+4. **MySQL Backup Cron Job** - Daily encrypted backups to Cloudflare R2
 
 ### Required Secrets
 
@@ -66,6 +68,7 @@ Set these in the Render dashboard before deployment:
 | `DB_PASS` | Same as MYSQL_PASSWORD | (copy value) |
 | `RS_SCRAMBLE_KEY` | File path encryption | `openssl rand -hex 32` |
 | `RS_BASE_URL` | Your Render URL | `https://resourcespace-xxx.onrender.com` |
+| `FACES_DB_PASS` | Faces service DB access | Same as MYSQL_PASSWORD |
 | `BACKUP_DB_PASS` | Backup user password | `openssl rand -hex 32` |
 | `BACKUP_ENCRYPTION_KEY` | Backup encryption | `openssl rand -hex 32` |
 | `R2_ACCESS_KEY_ID` | Cloudflare R2 access | From Cloudflare dashboard |
@@ -128,6 +131,43 @@ Daily at 03:00 UTC. Backups are:
 **Recovery Time Objective (RTO):** ~30 minutes  
 **Recovery Point Objective (RPO):** 24 hours
 
+## Transcription Sync Tools
+
+The `scripts/` folder contains tools for syncing OCR and transcription data to ResourceSpace following archival integrity rules.
+
+### Setup
+
+```bash
+cd scripts
+cp env.example .env
+# Edit .env with RS_API_KEY
+```
+
+### Usage
+
+```bash
+# Full sync (all three layers)
+python sync_transcription.py --resource-id 123 \
+  --ocr ocr.txt --literal literal.txt --formatted formatted.txt \
+  --lang de --version v1.2.0
+
+# Check status
+python sync_transcription.py --resource-id 123 --status
+
+# List field IDs
+python sync_transcription.py --list-fields
+```
+
+### Field Mutability Rules
+
+| Layer | Rule |
+|-------|------|
+| OCR Text (Original) | **IMMUTABLE** - never overwrites |
+| Transcription (Literal) | Write-once, `--force-literal` to update |
+| Transcription (Formatted) | Iterable - updates when content changes |
+
+See `scripts/ARCHIVAL_API_REFERENCE.md` for full API documentation.
+
 ## Project Structure
 
 ```
@@ -135,6 +175,8 @@ Daily at 03:00 UTC. Backups are:
 │   ├── backup/
 │   │   ├── Dockerfile         # Backup job container
 │   │   └── backup-mysql.sh    # Backup script with R2 upload
+│   ├── faces/
+│   │   └── Dockerfile         # InsightFace AI service
 │   ├── mysql/
 │   │   ├── Dockerfile         # MySQL 8 container
 │   │   ├── my.cnf             # MySQL configuration
@@ -143,13 +185,26 @@ Daily at 03:00 UTC. Backups are:
 │   └── config.php.template    # Config template with env var placeholders
 ├── plugins/
 │   └── ocr_sidepanel/         # Custom OCR display plugin
+├── scripts/
+│   ├── sync_transcription.py  # Archival transcription sync CLI
+│   ├── ARCHIVAL_API_REFERENCE.md  # API documentation
+│   └── env.example            # Environment template for scripts
 ├── .env.example               # Example environment variables (safe to commit)
 ├── .env                       # Actual environment variables (gitignored)
-├── docker-compose.yaml        # Local development setup
-├── Dockerfile                 # Container build instructions
+├── docker-compose.yaml        # Local development setup (MariaDB + MinIO)
+├── Dockerfile                 # ResourceSpace container
 ├── entrypoint.sh              # Startup script (generates config)
 └── render.yaml                # Render.com deployment config
 ```
+
+## Local Development Stack
+
+The local `docker-compose.yaml` includes:
+
+- **resourcespace** - PHP application on port 8080
+- **mariadb** - Database with health checks
+- **minio** - S3-compatible object storage (ports 9000/9001)
+- **minio-setup** - Creates initial bucket
 
 ## Installation Notes
 
