@@ -30,9 +30,10 @@ echo "[entrypoint] Config generated successfully"
 
 # Wait for MySQL to be ready
 echo "[entrypoint] Waiting for MySQL at $DB_HOST..."
+echo "[entrypoint] DB_USER=$DB_USER, DB_NAME=$DB_NAME, DB_PASS length=${#DB_PASS}"
 MAX_RETRIES=30
 RETRY_COUNT=0
-while ! mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" -e "SELECT 1" "$DB_NAME" &>/dev/null; do
+while ! mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" -e "SELECT 1" "$DB_NAME" 2>&1; do
     RETRY_COUNT=$((RETRY_COUNT + 1))
     if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
         echo "[entrypoint] ERROR: MySQL not ready after $MAX_RETRIES attempts"
