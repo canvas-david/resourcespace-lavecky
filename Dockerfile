@@ -28,10 +28,6 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     libimage-exiftool-perl \
     ffmpeg \
-    libopencv-dev \
-    python3-opencv \
-    python3 \
-    python3-pip \
     subversion \
     cron \
     postfix \
@@ -39,6 +35,7 @@ RUN apt-get update && apt-get install -y \
     gettext-base \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
+# Note: OpenCV/Python removed - AI Faces runs as separate 'faces' service (InsightFace)
 
 RUN sed -i -e "s/upload_max_filesize\s*=\s*2M/upload_max_filesize = 2G/g" /etc/php/8.3/apache2/php.ini \
  && sed -i -e "s/post_max_size\s*=\s*8M/post_max_size = 2G/g" /etc/php/8.3/apache2/php.ini \

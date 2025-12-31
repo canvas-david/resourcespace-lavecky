@@ -51,6 +51,22 @@ services:
       mountPath: /var/www/html/filestore
       sizeGB: 20
 
+  # AI Faces (InsightFace) Private Service
+  - type: pserv
+    name: faces
+    runtime: docker
+    dockerfilePath: ./docker/faces/Dockerfile
+    plan: starter
+    envVars:
+      - key: FACES_DB_HOST
+        value: mysql
+      - key: FACES_DB_USER
+        value: resourcespace
+      - key: FACES_DB_PASS
+        sync: false
+      - key: FACES_PORT
+        value: "8001"
+
   # Daily Backup Cron Job
   - type: cron
     name: mysql-backup
