@@ -35,7 +35,10 @@ services:
       - key: DB_USER
         value: resourcespace
       - key: DB_PASS
-        sync: false
+        fromService:
+          name: mysql
+          type: pserv
+          envVarKey: MYSQL_PASSWORD
       - key: DB_NAME
         value: resourcespace
       - key: RS_BASE_URL
@@ -63,7 +66,10 @@ services:
       - key: FACES_DB_USER
         value: resourcespace
       - key: FACES_DB_PASS
-        sync: false
+        fromService:
+          name: mysql
+          type: pserv
+          envVarKey: MYSQL_PASSWORD
       - key: FACES_PORT
         value: "8001"
 
