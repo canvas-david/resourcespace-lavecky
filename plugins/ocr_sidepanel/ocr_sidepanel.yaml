@@ -1,0 +1,10 @@
+name: OCR Side Panel
+version: 1.0.0
+author: Custom
+description: Displays OCR text in a side panel alongside the resource image
+update_url: ''
+category: 1
+default_enable: 1
+requires_configuration: 0
+config_url: ''
+disable_group_select: 0

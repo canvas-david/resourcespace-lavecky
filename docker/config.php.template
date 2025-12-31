@@ -1,0 +1,18 @@
+<?php
+// Database - injected from environment
+$mysql_server = '${DB_HOST}';
+$mysql_username = '${DB_USER}';
+$mysql_password = '${DB_PASS}';
+$mysql_db = '${DB_NAME}';
+
+// Core settings
+$baseurl = '${RS_BASE_URL}';
+$scramble_key = '${RS_SCRAMBLE_KEY}';
+
+// Storage
+$storagedir = '/var/www/html/filestore';
+
+// Features
+$enable_api = true;
+$email_from = '${RS_EMAIL_FROM}';
+$email_notify = '${RS_EMAIL_NOTIFY}';

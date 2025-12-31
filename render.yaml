@@ -1,0 +1,72 @@
+# Render.com deployment configuration
+# See: https://render.com/docs/blueprint-spec
+
+services:
+  # MySQL Private Service
+  - type: pserv
+    name: mysql
+    runtime: docker
+    dockerfilePath: ./docker/mysql/Dockerfile
+    plan: starter
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        sync: false
+      - key: MYSQL_DATABASE
+        value: resourcespace
+      - key: MYSQL_USER
+        value: resourcespace
+      - key: MYSQL_PASSWORD
+        sync: false
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+
+  # ResourceSpace Web Service
+  - type: web
+    name: resourcespace
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /login.php
+    envVars:
+      - key: DB_HOST
+        value: mysql
+      - key: DB_USER
+        value: resourcespace
+      - key: DB_PASS
+        sync: false
+      - key: DB_NAME
+        value: resourcespace
+      - key: RS_BASE_URL
+        sync: false
+      - key: RS_SCRAMBLE_KEY
+        sync: false
+      - key: RS_EMAIL_FROM
+        sync: false
+      - key: RS_EMAIL_NOTIFY
+        sync: false
+    disk:
+      name: filestore
+      mountPath: /var/www/html/filestore
+      sizeGB: 20
+
+  # Daily Backup Cron Job
+  - type: cron
+    name: mysql-backup
+    runtime: docker
+    dockerfilePath: ./docker/backup/Dockerfile
+    schedule: "0 3 * * *"
+    envVars:
+      - key: BACKUP_DB_PASS
+        sync: false
+      - key: BACKUP_ENCRYPTION_KEY
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_BUCKET
+        sync: false

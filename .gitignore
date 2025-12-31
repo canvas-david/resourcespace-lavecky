@@ -1,0 +1,36 @@
+# Environment files with secrets
+.env
+*.env.local
+
+# Config files that may contain secrets
+config.php
+db.env
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploaded test files
+*.jpeg
+*.jpg
+*.png
+*.gif
+*.pdf
+!plugins/**/*.png
+!plugins/**/*.jpg
+
+# Docker
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
