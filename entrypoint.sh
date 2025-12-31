@@ -88,14 +88,18 @@ else
     echo "[entrypoint] Database already initialized (user table exists)"
 fi
 
-# Always ensure admin user exists with known password
-# ResourceSpace uses MySQL's PASSWORD() function for hashing
+# Always ensure admin user exists with known password and clear any lockouts
 echo "[entrypoint] Ensuring admin user exists with default password..."
 mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
     INSERT INTO user (username, password, fullname, email, usergroup, created, approved)
     VALUES ('admin', MD5('admin'), 'Administrator', '${RS_EMAIL_NOTIFY:-admin@localhost}', 3, NOW(), 1)
-    ON DUPLICATE KEY UPDATE password=MD5('admin');
+    ON DUPLICATE KEY UPDATE password=MD5('admin'), login_tries=0, login_last_try=NULL;
 " 2>/dev/null && echo "[entrypoint] Admin user ready (admin/admin)" || echo "[entrypoint] Admin check completed"
+
+# Clear IP-based login lockouts
+mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
+    DELETE FROM ip_lockout;
+" 2>/dev/null && echo "[entrypoint] Login lockouts cleared" || true
 
 # Start cron service
 service cron start
