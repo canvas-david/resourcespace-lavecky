@@ -33,9 +33,11 @@ RUN apt-get update && apt-get install -y \
     postfix \
     unzip \
     gettext-base \
+    mysql-client \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 # Note: OpenCV/Python removed - AI Faces runs as separate 'faces' service (InsightFace)
+# Note: mysql-client added for database initialization checks
 
 RUN sed -i -e "s/upload_max_filesize\s*=\s*2M/upload_max_filesize = 2G/g" /etc/php/8.3/apache2/php.ini \
  && sed -i -e "s/post_max_size\s*=\s*8M/post_max_size = 2G/g" /etc/php/8.3/apache2/php.ini \

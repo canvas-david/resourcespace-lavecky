@@ -12,7 +12,6 @@ services:
       - .env
     volumes:
       - filestore:/var/www/html/filestore
-      - ./plugins/ocr_sidepanel:/var/www/html/plugins/ocr_sidepanel:ro
     networks:
       - frontend
       - backend

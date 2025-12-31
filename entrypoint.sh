@@ -28,6 +28,68 @@ fi
 
 echo "[entrypoint] Config generated successfully"
 
+# Wait for MySQL to be ready
+echo "[entrypoint] Waiting for MySQL at $DB_HOST..."
+MAX_RETRIES=30
+RETRY_COUNT=0
+while ! mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" -e "SELECT 1" "$DB_NAME" &>/dev/null; do
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+        echo "[entrypoint] ERROR: MySQL not ready after $MAX_RETRIES attempts"
+        exit 1
+    fi
+    echo "[entrypoint] MySQL not ready, waiting... ($RETRY_COUNT/$MAX_RETRIES)"
+    sleep 2
+done
+echo "[entrypoint] MySQL is ready"
+
+# Check if database is initialized (check for 'user' table)
+TABLE_EXISTS=$(mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME' AND table_name='user';" 2>/dev/null || echo "0")
+
+if [ "$TABLE_EXISTS" = "0" ]; then
+    echo "[entrypoint] Database not initialized. Running schema setup..."
+    
+    # ResourceSpace includes dbstruct SQL files in its distribution
+    # Run the main database structure file
+    if [ -f "/var/www/html/dbstruct/dbstruct.txt" ]; then
+        echo "[entrypoint] Loading database schema from dbstruct.txt..."
+        mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < /var/www/html/dbstruct/dbstruct.txt
+        echo "[entrypoint] Database schema loaded"
+    else
+        echo "[entrypoint] WARNING: dbstruct.txt not found, attempting PHP-based init..."
+        # Fallback: Use PHP CLI to run database setup
+        cd /var/www/html
+        php -r "
+            \$mysql_server = '${DB_HOST}';
+            \$mysql_username = '${DB_USER}';
+            \$mysql_password = '${DB_PASS}';
+            \$mysql_db = '${DB_NAME}';
+            include 'include/db.php';
+            if (file_exists('dbstruct/dbstruct.txt')) {
+                \$sql = file_get_contents('dbstruct/dbstruct.txt');
+                sql_query(\$sql);
+                echo 'Database schema loaded via PHP';
+            }
+        " 2>/dev/null || echo "[entrypoint] PHP init skipped"
+    fi
+    
+    # Create default admin user (password: admin - CHANGE IMMEDIATELY)
+    # Password is MD5 hash of 'admin' (ResourceSpace uses MD5 for passwords)
+    ADMIN_HASH='21232f297a57a5a743894a0e4a801fc3'
+    
+    echo "[entrypoint] Creating default admin user..."
+    mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
+        INSERT INTO user (username, password, fullname, email, usergroup, created, approved)
+        VALUES ('admin', '${ADMIN_HASH}', 'Administrator', '${RS_EMAIL_NOTIFY}', 3, NOW(), 1)
+        ON DUPLICATE KEY UPDATE username=username;
+    " 2>/dev/null || echo "[entrypoint] Admin user may already exist"
+    
+    echo "[entrypoint] Database initialization complete"
+    echo "[entrypoint] ⚠️  DEFAULT LOGIN: admin / admin - CHANGE PASSWORD IMMEDIATELY"
+else
+    echo "[entrypoint] Database already initialized (user table exists)"
+fi
+
 # Start cron service
 service cron start
 
