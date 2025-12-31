@@ -62,7 +62,7 @@ services:
     name: faces
     runtime: docker
     dockerfilePath: ./docker/faces/Dockerfile
-    plan: starter
+    plan: standard
     envVars:
       - key: FACES_DB_HOST
         fromService:
