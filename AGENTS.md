@@ -103,9 +103,9 @@ Fields are organized into tabs for different user workflows:
 | Tab | Purpose | Field IDs |
 |-----|---------|-----------|
 | 1. Default | Standard asset metadata | (built-in) |
-| 2. Transcription | Readable content | 89, 96, 101, 102 |
+| 2. Transcription | Readable content (full-width text) | 89, 96, 101 |
 | 3. Review | Editorial workflow | 94, 95, 98, 99 |
-| 4. Technical | Processing details | 90, 91, 92, 93, 97, 100 |
+| 4. Technical | Processing details + source language | 90, 91, 92, 93, 97, 100, 102 |
 | 5. Archival | Raw source data | 88 |
 
 Tab names may be prefixed with numbers to force correct sort order (ResourceSpace sorts alphabetically).

@@ -2,9 +2,9 @@
 -- Run via: mysql -h mysql-xbeu -u resourcespace -p resourcespace < create_ocr_fields.sql
 --
 -- Creates a multi-tab metadata structure:
---   Tab 2: Transcription - Readable content
+--   Tab 2: Transcription - Readable content (text fields only, full-width display)
 --   Tab 3: Review - Status and notes for reviewers
---   Tab 4: Technical - Processing metadata
+--   Tab 4: Technical - Processing metadata (including source language)
 --   Tab 5: Archival - Raw OCR output
 
 -- Field types: 0 = single line, 5 = multi-line textarea
@@ -31,7 +31,8 @@ DELETE FROM resource_type_field WHERE ref IN (88, 89, 90, 91, 92, 93, 94, 95, 96
 DELETE FROM resource_data WHERE resource_type_field IN (88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102);
 
 -- =============================================================================
--- TAB 2: TRANSCRIPTION (Readable content for end users)
+-- TAB 2: TRANSCRIPTION (Readable content for end users - text fields only)
+-- Only multi-line text fields here for full-width display
 -- =============================================================================
 
 -- Literal Transcription - Field 89
@@ -45,10 +46,6 @@ VALUES (96, 'transcriptionreaderformatted', 'Reader-Friendly Version', 5, 20, 1,
 -- English Translation - Field 101
 INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, display_field, tab, advanced_search, simple_search, help_text, hide_when_uploading, active)
 VALUES (101, 'englishtranslation', 'English Translation', 5, 30, 1, 1, 2, 1, 1, 'Machine-translated English version of the OCR text', 1, 1);
-
--- Translation Source Language - Field 102
-INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, display_field, tab, advanced_search, simple_search, help_text, hide_when_uploading, active)
-VALUES (102, 'translationsourcelanguage', 'Translation Source Language', 0, 40, 1, 1, 2, 1, 0, 'Original language of the document (e.g., pl, he, de)', 1, 1);
 
 -- =============================================================================
 -- TAB 3: REVIEW (Status and notes for reviewers/editors)
@@ -71,7 +68,7 @@ INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_inde
 VALUES (99, 'formattingnotes', 'Formatting Notes', 5, 40, 0, 1, 3, 0, 0, 'Notes about the formatting quality or issues', 1, 1);
 
 -- =============================================================================
--- TAB 4: TECHNICAL (Processing metadata)
+-- TAB 4: TECHNICAL (Processing metadata + source language)
 -- =============================================================================
 
 -- Status - Field 92
@@ -97,6 +94,10 @@ VALUES (97, 'formattingmethod', 'Formatting Method', 0, 50, 1, 1, 4, 1, 0, 'AI m
 -- Pipeline Version - Field 100
 INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, display_field, tab, advanced_search, simple_search, help_text, hide_when_uploading, active)
 VALUES (100, 'processingversion', 'Pipeline Version', 0, 60, 0, 1, 4, 1, 0, 'Processing pipeline version (e.g., v1.0.0)', 1, 1);
+
+-- Translation Source Language - Field 102 (moved from Transcription tab for cleaner layout)
+INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, display_field, tab, advanced_search, simple_search, help_text, hide_when_uploading, active)
+VALUES (102, 'translationsourcelanguage', 'Source Language', 0, 70, 1, 1, 4, 1, 0, 'Original language of the document (e.g., pl, he, de)', 1, 1);
 
 -- =============================================================================
 -- TAB 5: ARCHIVAL (Raw OCR - immutable source)
