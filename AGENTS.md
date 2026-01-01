@@ -37,6 +37,7 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `render.yaml` | Render.com production deployment |
 | `docker/config.php.template` | Config template with env var placeholders |
 | `entrypoint.sh` | Generates config.php, auto-inits DB, creates admin user |
+| `cronjob` | Cron schedule for background tasks |
 | `docker/mysql/` | MySQL container for Render |
 | `docker/backup/` | Backup cron job with R2 upload |
 | `docker/faces/` | InsightFace AI service |
@@ -44,15 +45,22 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `plugins/tts_audio/pages/generate.php` | TTS generation endpoint (calls ElevenLabs API) |
 | `plugins/tts_audio/hooks/view.php` | Audio player panel on resource view |
 | `scripts/db.sh` | Render MySQL helper (SSH database access) |
-| `scripts/create_ocr_fields.sql` | OCR/transcription field schema |
+| `scripts/create_ocr_fields.sql` | OCR/transcription field schema (fields 88-102) |
+| `scripts/create_tts_fields.sql` | TTS metadata field schema (fields 103-106) |
+| `scripts/setup_ocr_fields.sh` | OCR field setup automation helper |
 | `scripts/process_ocr.py` | Google Document AI OCR processor |
 | `scripts/ocr_google_vision.py` | Google Cloud Vision OCR (simpler, uses API key) |
+| `scripts/ocr_claude.py` | Claude Vision OCR (⚠️ LLM - not for archival) |
 | `scripts/translate_ocr.py` | Claude Opus 4.5 translation (Anthropic API) |
 | `scripts/process_yadvashem_batch.py` | Batch OCR + translation pipeline |
 | `scripts/upload_testimony.py` | Upload processed documents to ResourceSpace |
 | `scripts/sync_transcription.py` | Archival transcription sync CLI |
 | `scripts/generate_tts.py` | ElevenLabs TTS audio generator |
+| `scripts/detect_faces.php` | PHP face detection helper |
+| `scripts/test_faces.sh` | Face AI service testing |
+| `scripts/ARCHIVAL_API_REFERENCE.md` | Detailed API reference for transcription sync |
 | `.github/workflows/build-base.yml` | GitHub Actions to build/push base image |
+| `downloads/` | Working directory for batch document processing |
 
 ## Critical Rules
 
@@ -79,26 +87,54 @@ mysql -h mysql-xbeu -u resourcespace -p resourcespace -e "UPDATE user SET passwo
 ### Transcription Field Mutability
 The sync_transcription.py enforces archival integrity:
 
-| Field | Rule |
-|-------|------|
-| OCR Text (Original) | **IMMUTABLE** - never overwrite |
-| Transcription (Literal) | Write-once, `--force-literal` to update |
-| Transcription (Formatted) | Iterable - updates allowed |
-| English Translation | Iterable, `--force-translation` to update |
-| Review Status | Never downgrades from `reviewed`/`approved` |
+| ID | Field | Rule |
+|----|-------|------|
+| 88 | OCR Text (Original) | **IMMUTABLE** - never overwrite |
+| 89 | Transcription (Literal) | Write-once, `--force-literal` to update |
+| 96 | Transcription (Formatted) | Iterable - updates allowed |
+| 101 | English Translation | Iterable, `--force-translation` to update |
+| 94, 98 | Review Status | Never downgrades from `reviewed`/`approved` |
+
+**Full field reference:** See `scripts/ARCHIVAL_API_REFERENCE.md` for complete field IDs (88-102) and API documentation.
 
 ### Metadata Tab Structure
 Fields are organized into tabs for different user workflows:
 
-| Tab | Purpose | Fields |
-|-----|---------|--------|
-| 1. Default | Standard asset metadata | Date, Filename, Keywords, etc. |
-| 2. Transcription | Readable content | Literal Transcription, Reader-Friendly Version, English Translation |
-| 3. Review | Editorial workflow | Transcription Status, Notes, Formatting Status, Notes |
-| 4. Technical | Processing details | OCR Status, Engine, Language, Methods, Pipeline Version |
-| 5. Archival | Raw source data | Original OCR Output |
+| Tab | Purpose | Field IDs |
+|-----|---------|-----------|
+| 1. Default | Standard asset metadata | (built-in) |
+| 2. Transcription | Readable content | 89, 96, 101, 102 |
+| 3. Review | Editorial workflow | 94, 95, 98, 99 |
+| 4. Technical | Processing details | 90, 91, 92, 93, 97, 100 |
+| 5. Archival | Raw source data | 88 |
 
-Tab names are prefixed with numbers to force correct sort order (ResourceSpace sorts alphabetically).
+Tab names may be prefixed with numbers to force correct sort order (ResourceSpace sorts alphabetically).
+
+**Complete field schema:** Run `scripts/create_ocr_fields.sql` to create all transcription fields (88-102).
+
+### Field ID Quick Reference
+
+| ID | Name | Tab | Purpose |
+|----|------|-----|---------|
+| 88 | `ocrtext` | Archival | Raw OCR output (IMMUTABLE) |
+| 89 | `transcriptioncleaned` | Transcription | Literal transcription |
+| 90 | `ocrengine` | Technical | OCR engine used |
+| 91 | `ocrlanguagedetected` | Technical | Detected language |
+| 92 | `ocrstatus` | Technical | Processing status |
+| 93 | `transcriptionmethod` | Technical | AI method used |
+| 94 | `transcriptionreviewstatus` | Review | Review status |
+| 95 | `transcriptionnotes` | Review | Transcription notes |
+| 96 | `transcriptionreaderformatted` | Transcription | Reader-friendly version |
+| 97 | `formattingmethod` | Technical | Formatting method |
+| 98 | `formattingreviewstatus` | Review | Formatting review status |
+| 99 | `formattingnotes` | Review | Formatting notes |
+| 100 | `processingversion` | Technical | Pipeline version |
+| 101 | `englishtranslation` | Transcription | English translation |
+| 102 | `translationsourcelanguage` | Transcription | Source language code |
+| 103 | `ttsstatus` | Transcription | TTS generation status |
+| 104 | `ttsengine` | Transcription | TTS engine |
+| 105 | `ttsvoice` | Transcription | TTS voice used |
+| 106 | `ttsgeneratedat` | Transcription | TTS timestamp |
 
 **Database schema:** The `resource_type_field.tab` column is an integer FK to `tab.ref`, not a string. Create tabs first, then reference by ID:
 ```sql
@@ -158,7 +194,7 @@ The base image is private. Render pulls it using configured Docker credentials.
 
 ### Process OCR
 
-**Option 1: Google Cloud Vision API (Recommended)**
+**Option 1: Google Cloud Vision API (Recommended for Archival)**
 Simpler setup, uses API key instead of service account credentials.
 
 ```bash
@@ -184,6 +220,20 @@ python process_ocr.py --file document.pdf --resource-id 123 --lang de
 python process_ocr.py --file document.pdf --output ocr.txt
 ```
 
+**Option 3: Claude Vision OCR (⚠️ NOT for archival work)**
+Uses same Anthropic API as translation. Simpler setup but carries hallucination risk.
+
+```bash
+cd scripts
+# Basic OCR
+ANTHROPIC_API_KEY="your-key" python ocr_claude.py \
+  --file document.jpg --output ocr.txt
+
+# With language hint
+ANTHROPIC_API_KEY="your-key" python ocr_claude.py \
+  --file document.jpg --lang pl --stdout
+```
+
 **OCR Quality Comparison:**
 | Factor | Google Vision/Document AI | Claude Vision (LLM) |
 |--------|--------------------------|---------------------|
@@ -191,8 +241,9 @@ python process_ocr.py --file document.pdf --output ocr.txt
 | Hallucination Risk | Near zero | Can fabricate text |
 | Confidence Scores | Yes, per-block | No |
 | Use for Archival | ✓ Recommended | ⚠ Not recommended |
+| Setup Complexity | API key / Service account | API key (same as translation) |
 
-For archival/Holocaust testimony work, always use dedicated OCR (Google Vision or Document AI) to avoid LLM hallucination risks.
+**⚠️ For archival/Holocaust testimony work, always use dedicated OCR (Google Vision or Document AI) to avoid LLM hallucination risks.**
 
 ### Sync Transcriptions
 ```bash
@@ -265,18 +316,20 @@ ssh srv-d5acinkhg0os73cr9gq0@ssh.oregon.render.com \
 Fields must be linked to resource types via the join table, or API `update_field` will silently fail.
 
 ```bash
-# 1. Create the field
+# 1. Create the field (example: custom field 110)
 ./db.sh "INSERT INTO resource_type_field (ref, name, title, type, tab, global, active) 
-  VALUES (101, 'englishtranslation', 'English Translation', 5, 2, 1, 1)"
+  VALUES (110, 'customfield', 'Custom Field', 5, 2, 1, 1)"
 
 # 2. Link to resource types (CRITICAL - without this, API updates fail)
 ./db.sh "INSERT IGNORE INTO resource_type_field_resource_type 
   (resource_type_field, resource_type) VALUES 
-  (101, 0), (101, 1), (101, 2), (101, 3), (101, 4)"
+  (110, 0), (110, 1), (110, 2), (110, 3), (110, 4)"
 
 # Verify field is linked
-./db.sh "SELECT * FROM resource_type_field_resource_type WHERE resource_type_field = 101"
+./db.sh "SELECT * FROM resource_type_field_resource_type WHERE resource_type_field = 110"
 ```
+
+**Pre-defined field schemas:** Use `create_ocr_fields.sql` (88-102) and `create_tts_fields.sql` (103-106) instead of manual creation.
 
 **SSH Rate Limiting:**
 Render SSH connections are rate-limited. Space out multiple queries:
@@ -578,6 +631,126 @@ fi
 -- Remove plugin from active plugins
 DELETE FROM plugins WHERE name='plugin_name';
 ```
+
+## Batch Document Processing (downloads/)
+
+The `downloads/` directory is the working area for batch OCR and translation workflows.
+
+### Directory Structure
+```
+downloads/
+└── yadvashem_3555547/           # Document ID from source archive
+    ├── metadata.json            # Source metadata
+    ├── download_images.sh       # Script to fetch page images
+    ├── README.md                # Document description
+    ├── ocr/                     # Raw OCR output per page
+    │   ├── page_01_pl.txt       # {page}_{language}.txt
+    │   └── page_21_he.txt
+    ├── translations/            # English translations per page
+    │   ├── page_01_pl_en.txt    # {page}_{source}_en.txt
+    │   └── page_21_he_en.txt
+    ├── resource_polish/         # Upload-ready bundle (Polish pages)
+    │   ├── metadata.json
+    │   ├── ocr_combined.txt
+    │   └── translation_combined.txt
+    └── resource_hebrew/         # Upload-ready bundle (Hebrew pages)
+        ├── metadata.json
+        ├── ocr_combined.txt
+        └── translation_combined.txt
+```
+
+### Batch Processing Workflow
+```bash
+cd scripts
+
+# 1. Process OCR + translation for multi-language document
+python process_yadvashem_batch.py \
+  --input-dir ../downloads/yadvashem_3555547 \
+  --polish-pages 1-20 \
+  --hebrew-pages 21-34
+
+# 2. Upload Polish testimony to ResourceSpace
+RS_BASE_URL="https://your-instance.onrender.com" \
+RS_API_KEY="your-api-key" \
+python upload_testimony.py --resource-dir ../downloads/yadvashem_3555547/resource_polish
+
+# 3. Upload Hebrew testimony, linked to Polish resource (ID 6)
+python upload_testimony.py \
+  --resource-dir ../downloads/yadvashem_3555547/resource_hebrew \
+  --related-to 6
+```
+
+### Naming Conventions
+- **Page files:** `page_NN_{lang}.txt` where NN is zero-padded page number
+- **Translations:** `page_NN_{source}_en.txt` (English output from source language)
+- **Combined files:** `ocr_combined.txt`, `translation_combined.txt`
+
+---
+
+## Troubleshooting
+
+### API update_field Returns False
+**Symptom:** `update_field` API call returns `false` but no error.
+
+**Cause:** Field not linked to resource type in join table.
+
+**Fix:**
+```bash
+./db.sh "INSERT IGNORE INTO resource_type_field_resource_type 
+  (resource_type_field, resource_type) VALUES 
+  (FIELD_ID, 0), (FIELD_ID, 1), (FIELD_ID, 2), (FIELD_ID, 3), (FIELD_ID, 4)"
+```
+
+### SSH Connection Rate Limited
+**Symptom:** `Connection refused` after multiple SSH commands.
+
+**Cause:** Render rate-limits SSH connections.
+
+**Fix:** Add delays between commands:
+```bash
+./db.sh "query1" && sleep 5 && ./db.sh "query2"
+```
+
+### Files Inaccessible After Config Change
+**Symptom:** Uploaded files return 404 or blank.
+
+**Cause:** `RS_SCRAMBLE_KEY` was changed.
+
+**Fix:** Restore original key from backup. **There is no recovery if key is lost.**
+
+### Plugin Not Appearing in Admin
+**Symptom:** Plugin folder exists but not listed in Plugins page.
+
+**Cause:** Invalid YAML syntax or wrong field names.
+
+**Check:**
+- Use `desc:` not `description:`
+- Use `title:` for display name, `name:` must match folder
+- `category:` must be string not number
+
+### TTS Generation Fails
+**Symptom:** Generate button does nothing or returns error.
+
+**Check:**
+1. `ELEVENLABS_API_KEY` exported in `/etc/apache2/envvars`
+2. Formatted transcription field (96) has content
+3. Browser console for JavaScript errors
+
+### OCR Returns Empty Text
+**Symptom:** Google Vision/Document AI returns blank.
+
+**Causes:**
+- Image too small or low quality
+- Wrong MIME type detected
+- API quota exceeded
+
+**Debug:**
+```bash
+# Check with JSON output for error details
+GOOGLE_API_KEY="key" python ocr_google_vision.py --file image.jpg --json
+```
+
+---
 
 ## Backups
 

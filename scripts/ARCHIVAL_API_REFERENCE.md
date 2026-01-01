@@ -65,6 +65,8 @@ python process_ocr.py --file document.pdf --stdout --json
 | 88 | OCR Text (Original) | Raw OCR output | **IMMUTABLE** |
 | 89 | Transcription (Cleaned – Literal) | AI spelling-normalised | Write-once (force to update) |
 | 96 | Transcription (Reader Formatted) | Formatted for reading | **Iterable** |
+| 101 | English Translation | Machine-translated English | **Iterable** (`--force-translation`) |
+| 102 | Translation Source Language | Original language (e.g., `pl`, `he`) | Follows parent |
 | 90 | ocr_engine | e.g., `google_document_ai` | Follows parent |
 | 91 | ocr_language_detected | e.g., `en`, `de`, `he` | Follows parent |
 | 92 | ocr_status | `done`, `failed`, `pending` | Follows parent |
@@ -75,6 +77,8 @@ python process_ocr.py --file document.pdf --stdout --json
 | 98 | formatting_review_status | `reviewed`, `unreviewed` (never downgrades) | Special |
 | 99 | formatting_notes | Free text | Follows parent |
 | 100 | processing_version | e.g., `v1.2.0` | Updated on each sync |
+
+**Schema setup:** Run `scripts/create_ocr_fields.sql` to create fields 88-102.
 
 ---
 
@@ -319,10 +323,12 @@ python sync_transcription.py --resource-id 123 \
 
 | ID | Name | Purpose |
 |----|------|---------|
-| 101 | `tts_status` | `pending`, `done`, `failed` |
-| 102 | `tts_engine` | `elevenlabs` |
-| 103 | `tts_voice` | Voice name used |
-| 104 | `tts_generated_at` | Timestamp of generation |
+| 103 | `tts_status` | `pending`, `done`, `failed` |
+| 104 | `tts_engine` | `elevenlabs` |
+| 105 | `tts_voice` | Voice name used |
+| 106 | `tts_generated_at` | Timestamp of generation |
+
+**Note:** TTS fields use IDs 103-106. IDs 101-102 are reserved for OCR translation fields.
 
 ### Available Voices
 

@@ -6,10 +6,11 @@
  */
 
 // Field IDs - must match create_tts_fields.sql
-define('TTS_FIELD_STATUS', 101);
-define('TTS_FIELD_ENGINE', 102);
-define('TTS_FIELD_VOICE', 103);
-define('TTS_FIELD_GENERATED_AT', 104);
+// Note: IDs 101-102 are reserved for OCR translation fields (see create_ocr_fields.sql)
+define('TTS_FIELD_STATUS', 103);
+define('TTS_FIELD_ENGINE', 104);
+define('TTS_FIELD_VOICE', 105);
+define('TTS_FIELD_GENERATED_AT', 106);
 
 // Source field - Reader Formatted transcription
 define('TTS_SOURCE_FIELD', 96);
