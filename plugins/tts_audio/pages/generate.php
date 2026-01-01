@@ -177,21 +177,48 @@ if ($bytes_written === false || $bytes_written === 0) {
     exit('Failed to write audio to temp file');
 }
 
-// Add as alternative file using ResourceSpace's native function
+// Add alternative file record to database
 $description = "Text-to-speech audio (voice: $voice, model: $model)";
-$alt_ref = add_alternative_file($ref, 'TTS Audio', $description, 'tts_audio.mp3', 'mp3', filesize($temp_file), '', $temp_file);
+$file_size = filesize($temp_file);
+$alt_ref = add_alternative_file($ref, 'TTS Audio', $description, 'tts_audio.mp3', 'mp3', $file_size, '');
+
+if (!$alt_ref) {
+    unlink($temp_file);
+    if ($ajax) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Failed to create alternative file record']);
+        exit;
+    }
+    exit('Failed to create alternative file record');
+}
+
+// Get the target path for the alternative file
+$target_path = get_resource_path($ref, true, "", true, "mp3", -1, 1, false, "", $alt_ref);
+
+// Ensure the directory exists
+$target_dir = dirname($target_path);
+if (!is_dir($target_dir)) {
+    mkdir($target_dir, 0777, true);
+}
+
+// Copy the temp file to the target location
+if (!copy($temp_file, $target_path)) {
+    // Clean up on failure
+    unlink($temp_file);
+    delete_alternative_file($ref, $alt_ref);
+    if ($ajax) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Failed to copy audio file to filestore']);
+        exit;
+    }
+    exit('Failed to copy audio file to filestore');
+}
+
+// Set proper permissions
+chmod($target_path, 0664);
 
 // Clean up temp file
 unlink($temp_file);
-
-if (!$alt_ref) {
-    if ($ajax) {
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Failed to create alternative file']);
-        exit;
-    }
-    exit('Failed to create alternative file');
-}
 
 // Success
 if ($ajax) {
