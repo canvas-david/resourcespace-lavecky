@@ -132,5 +132,23 @@ function HookTts_audioViewCustompanels()
     </script>
     <?php
     
+    // Hide empty consent/license panels via JS (cleaner than CSS hacks)
+    ?>
+    <script>
+    (function() {
+        // Hide RecordBox panels with empty content (just "+ New" links)
+        document.querySelectorAll('.RecordBox').forEach(function(box) {
+            var title = box.querySelector('.Title');
+            if (title) {
+                var text = title.textContent.toLowerCase();
+                if (text.includes('consent') || text.includes('license')) {
+                    box.style.display = 'none';
+                }
+            }
+        });
+    })();
+    </script>
+    <?php
+    
     return false; // Allow further custom panels
 }

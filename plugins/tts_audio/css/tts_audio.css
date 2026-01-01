@@ -188,6 +188,21 @@
     font-size: 13px;
 }
 
+/* Hide consent and license management panels on view page */
+/* These plugins add empty panels that clutter the UI */
+.RecordBox:has(.Title:contains("Consent")),
+.RecordBox:has(.Title:contains("License")) {
+    display: none;
+}
+
+/* Fallback for browsers without :has() - hide by plugin-specific classes if available */
+#ConsentManagerPanel,
+#LicenseManagerPanel,
+.consentmanager-panel,
+.licensemanager-panel {
+    display: none;
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
     .tts-audio-container {
