@@ -1,10 +1,9 @@
-name: TTS Audio
-version: 1.0.0
+name: tts_audio
+title: TTS Audio
 author: Custom
-description: Generates text-to-speech audio from transcription and displays audio player
-update_url: ''
-category: 1
-default_enable: 1
-requires_configuration: 1
-config_url: 'plugins/tts_audio/pages/setup.php'
+version: 1.0.0
+desc: Generates text-to-speech audio from transcription and displays audio player
+icon: fa fa-volume-up
+category: AI
+config_url: /plugins/tts_audio/pages/setup.php
 disable_group_select: 0
