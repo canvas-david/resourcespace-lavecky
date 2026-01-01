@@ -119,5 +119,17 @@ service cron start
 # Ensure daily cron jobs are executable
 chmod +x /etc/cron.daily/*
 
+# Export environment variables for Apache/PHP
+# These are needed by plugins that call external scripts
+if [ -n "$RS_API_KEY" ]; then
+    echo "export RS_API_KEY='$RS_API_KEY'" >> /etc/apache2/envvars
+fi
+if [ -n "$ELEVENLABS_API_KEY" ]; then
+    echo "export ELEVENLABS_API_KEY='$ELEVENLABS_API_KEY'" >> /etc/apache2/envvars
+fi
+if [ -n "$OPENAI_API_KEY" ]; then
+    echo "export OPENAI_API_KEY='$OPENAI_API_KEY'" >> /etc/apache2/envvars
+fi
+
 # Start Apache in foreground
 exec apachectl -D FOREGROUND
