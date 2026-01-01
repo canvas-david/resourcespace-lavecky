@@ -61,8 +61,10 @@ if (!$force && tts_audio_has_audio($ref)) {
 }
 
 // Get configuration
-$python_path = get_config_option(null, 'tts_audio_python_path', 'python3');
-$script_path = get_config_option(null, 'tts_audio_script_path', '');
+$python_path = 'python3';
+$script_path = '';
+get_config_option([], 'tts_audio_python_path', $python_path, 'python3');
+get_config_option([], 'tts_audio_script_path', $script_path, '');
 
 // Default script path if not configured
 if (empty($script_path)) {
