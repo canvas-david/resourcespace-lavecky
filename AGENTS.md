@@ -38,8 +38,9 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `docker/mysql/` | MySQL container for Render |
 | `docker/backup/` | Backup cron job with R2 upload |
 | `docker/faces/` | InsightFace AI service |
-| `plugins/ocr_sidepanel/` | OCR display plugin |
 | `plugins/tts_audio/` | TTS audio generation plugin |
+| `scripts/db.sh` | Render MySQL helper (SSH database access) |
+| `scripts/create_ocr_fields.sql` | OCR/transcription field schema |
 | `scripts/process_ocr.py` | Google Document AI OCR processor |
 | `scripts/sync_transcription.py` | Archival transcription sync CLI |
 | `scripts/generate_tts.py` | ElevenLabs TTS audio generator |
@@ -75,6 +76,19 @@ The sync_transcription.py enforces archival integrity:
 | Transcription (Literal) | Write-once, `--force-literal` to update |
 | Transcription (Formatted) | Iterable - updates allowed |
 | Review Status | Never downgrades from `reviewed`/`approved` |
+
+### Metadata Tab Structure
+Fields are organized into tabs for different user workflows:
+
+| Tab | Purpose | Fields |
+|-----|---------|--------|
+| 1. Default | Standard asset metadata | Date, Filename, Keywords, etc. |
+| 2. Transcription | Readable content | Literal Transcription, Reader-Friendly Version |
+| 3. Review | Editorial workflow | Transcription Status, Notes, Formatting Status, Notes |
+| 4. Technical | Processing details | OCR Status, Engine, Language, Methods, Pipeline Version |
+| 5. Archival | Raw source data | Original OCR Output |
+
+Tab names are prefixed with numbers to force correct sort order (ResourceSpace sorts alphabetically).
 
 ## Common Tasks
 
@@ -118,6 +132,52 @@ python sync_transcription.py --resource-id 123 \
 ### Check Transcription Status
 ```bash
 python scripts/sync_transcription.py --resource-id 123 --status
+```
+
+### SSH Database Access (Render Production)
+SSH is enabled on the resourcespace container for direct database access.
+
+**Prerequisites:**
+1. Add your SSH public key to Render: Dashboard → Account Settings → SSH Public Keys
+2. Your key: `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub`
+
+**Using the db.sh helper:**
+```bash
+cd scripts
+
+# Run a single query
+./db.sh "SELECT COUNT(*) FROM resource"
+
+# Run a SQL file
+./db.sh < create_ocr_fields.sql
+
+# Interactive MySQL session
+./db.sh
+```
+
+**Direct SSH access:**
+```bash
+# SSH into container
+ssh srv-d5acinkhg0os73cr9gq0@ssh.oregon.render.com
+
+# Run MySQL command directly
+ssh srv-d5acinkhg0os73cr9gq0@ssh.oregon.render.com \
+  "mysql -h mysql-xbeu -u resourcespace -p\$DB_PASS resourcespace -e 'SHOW TABLES'"
+```
+
+**Common database queries:**
+```bash
+# List all metadata tabs
+./db.sh "SELECT * FROM tab ORDER BY order_by"
+
+# List transcription fields
+./db.sh "SELECT ref, name, title, tab FROM resource_type_field WHERE ref BETWEEN 88 AND 100"
+
+# Check resource field data
+./db.sh "SELECT * FROM resource_data WHERE resource = 123"
+
+# Update field order
+./db.sh "UPDATE resource_type_field SET order_by = 10 WHERE ref = 89"
 ```
 
 ### Generate TTS Audio
