@@ -18,16 +18,19 @@ include_once dirname(__FILE__, 2) . '/include/tts_audio_functions.php';
 $saved = false;
 if (getval('save', '') !== '' && enforcePostRequest(false)) {
     // Save configuration options
-    set_config_option(null, 'tts_audio_default_voice', getval('tts_audio_default_voice', 'rachel'));
-    set_config_option(null, 'tts_audio_python_path', getval('tts_audio_python_path', 'python3'));
-    set_config_option(null, 'tts_audio_script_path', getval('tts_audio_script_path', ''));
+    set_config_option([], 'tts_audio_default_voice', getval('tts_audio_default_voice', 'rachel'));
+    set_config_option([], 'tts_audio_python_path', getval('tts_audio_python_path', 'python3'));
+    set_config_option([], 'tts_audio_script_path', getval('tts_audio_script_path', ''));
     $saved = true;
 }
 
 // Get current configuration
-$default_voice = get_config_option(null, 'tts_audio_default_voice', 'rachel');
-$python_path = get_config_option(null, 'tts_audio_python_path', 'python3');
-$script_path = get_config_option(null, 'tts_audio_script_path', '');
+$default_voice = 'rachel';
+$python_path = 'python3';
+$script_path = '';
+get_config_option([], 'tts_audio_default_voice', $default_voice, 'rachel');
+get_config_option([], 'tts_audio_python_path', $python_path, 'python3');
+get_config_option([], 'tts_audio_script_path', $script_path, '');
 
 include '../../../include/header.php';
 ?>

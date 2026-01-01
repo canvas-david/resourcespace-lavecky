@@ -27,7 +27,8 @@ function HookTts_audioViewCustompanels()
     }
     
     // Get default voice from config
-    $default_voice = get_config_option(null, 'tts_audio_default_voice', 'rachel');
+    $default_voice = 'rachel';
+    get_config_option([], 'tts_audio_default_voice', $default_voice, 'rachel');
     $voice_options = tts_audio_get_voice_options();
     
     ?>
