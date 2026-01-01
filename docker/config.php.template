@@ -31,7 +31,7 @@ $openai_gpt_fallback_model = 'gpt-3.5-turbo';
 
 // AI Faces (InsightFace) Service
 // Internal Render service address - only accessible from within Render network
-$faces_service_endpoint = 'http://faces-d1tp:10000';
+$faces_service_endpoint = 'http://faces-d1tp:8001';
 $faces_confidence_threshold = 0.5;  // Minimum detection confidence (0-1)
 $faces_match_threshold = 0.3;       // Similarity threshold for face search
 $faces_tag_threshold = 0.4;         // Threshold for auto-tagging faces
