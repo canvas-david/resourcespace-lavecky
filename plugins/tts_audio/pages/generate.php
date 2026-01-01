@@ -143,23 +143,14 @@ $descriptorspec = [
     2 => ['pipe', 'w'],  // stderr
 ];
 
-// Build environment string for the process
-$env_string = '';
-foreach ($env as $key => $value) {
-    $env_string .= "$key=" . escapeshellarg($value) . ' ';
-}
-
-$full_cmd = $env_string . $cmd . ' 2>&1';
+// Merge custom env with parent environment to include PATH and other system vars
+$full_env = array_merge(getenv(), $env);
 
 // Log the command (without sensitive data)
 debug('[TTS Audio] Executing TTS generation for resource ' . $ref);
 
-// Execute
-$output = [];
-$return_var = 0;
-
 // Use proc_open for better control
-$process = proc_open($cmd, $descriptorspec, $pipes, null, $env);
+$process = proc_open($cmd, $descriptorspec, $pipes, null, $full_env);
 
 if (is_resource($process)) {
     // Close stdin
