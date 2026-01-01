@@ -46,8 +46,10 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `scripts/db.sh` | Render MySQL helper (SSH database access) |
 | `scripts/create_ocr_fields.sql` | OCR/transcription field schema |
 | `scripts/process_ocr.py` | Google Document AI OCR processor |
+| `scripts/ocr_google_vision.py` | Google Cloud Vision OCR (simpler, uses API key) |
 | `scripts/translate_ocr.py` | Claude Opus 4.5 translation (Anthropic API) |
 | `scripts/process_yadvashem_batch.py` | Batch OCR + translation pipeline |
+| `scripts/upload_testimony.py` | Upload processed documents to ResourceSpace |
 | `scripts/sync_transcription.py` | Archival transcription sync CLI |
 | `scripts/generate_tts.py` | ElevenLabs TTS audio generator |
 | `.github/workflows/build-base.yml` | GitHub Actions to build/push base image |
@@ -98,6 +100,14 @@ Fields are organized into tabs for different user workflows:
 
 Tab names are prefixed with numbers to force correct sort order (ResourceSpace sorts alphabetically).
 
+**Database schema:** The `resource_type_field.tab` column is an integer FK to `tab.ref`, not a string. Create tabs first, then reference by ID:
+```sql
+-- Create tab
+INSERT INTO tab (ref, name, order_by) VALUES (2, '2. Transcription', 20);
+-- Assign field to tab
+UPDATE resource_type_field SET tab = 2 WHERE ref = 89;
+```
+
 ## Common Tasks
 
 ### Local Development
@@ -146,7 +156,25 @@ docker push ghcr.io/canvas-david/resourcespace-base:10.7
 
 The base image is private. Render pulls it using configured Docker credentials.
 
-### Process OCR with Document AI
+### Process OCR
+
+**Option 1: Google Cloud Vision API (Recommended)**
+Simpler setup, uses API key instead of service account credentials.
+
+```bash
+cd scripts
+# OCR with language hint
+GOOGLE_API_KEY="your-key" python ocr_google_vision.py \
+  --file document.jpg --lang pl --output ocr.txt
+
+# JSON output with confidence score
+GOOGLE_API_KEY="your-key" python ocr_google_vision.py \
+  --file document.jpg --lang he --json
+```
+
+**Option 2: Google Document AI**
+More complex setup (service account), but offers additional features like form/table extraction.
+
 ```bash
 cd scripts
 # Process and sync to ResourceSpace
@@ -155,6 +183,16 @@ python process_ocr.py --file document.pdf --resource-id 123 --lang de
 # Output to file only
 python process_ocr.py --file document.pdf --output ocr.txt
 ```
+
+**OCR Quality Comparison:**
+| Factor | Google Vision/Document AI | Claude Vision (LLM) |
+|--------|--------------------------|---------------------|
+| Accuracy | 98-99% on typewritten | ~95-97% variable |
+| Hallucination Risk | Near zero | Can fabricate text |
+| Confidence Scores | Yes, per-block | No |
+| Use for Archival | ✓ Recommended | ⚠ Not recommended |
+
+For archival/Holocaust testimony work, always use dedicated OCR (Google Vision or Document AI) to avoid LLM hallucination risks.
 
 ### Sync Transcriptions
 ```bash
@@ -175,6 +213,11 @@ SSH is enabled on the resourcespace container for direct database access.
 **Prerequisites:**
 1. Add your SSH public key to Render: Dashboard → Account Settings → SSH Public Keys
 2. Your key: `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub`
+
+**Docker container requirements** (already configured in Dockerfile):
+- `openssh-server` package installed
+- `~/.ssh` directory with `chmod 0700` permissions
+- See [render.com/docs/ssh#docker-specific-configuration](https://render.com/docs/ssh#docker-specific-configuration)
 
 **Using the db.sh helper:**
 ```bash
@@ -206,14 +249,50 @@ ssh srv-d5acinkhg0os73cr9gq0@ssh.oregon.render.com \
 ./db.sh "SELECT * FROM tab ORDER BY order_by"
 
 # List transcription fields
-./db.sh "SELECT ref, name, title, tab FROM resource_type_field WHERE ref BETWEEN 88 AND 100"
+./db.sh "SELECT ref, name, title, tab FROM resource_type_field WHERE ref BETWEEN 88 AND 102"
 
 # Check resource field data
 ./db.sh "SELECT * FROM resource_data WHERE resource = 123"
 
 # Update field order
 ./db.sh "UPDATE resource_type_field SET order_by = 10 WHERE ref = 89"
+
+# Link resources as related
+./db.sh "INSERT IGNORE INTO resource_related (resource, related) VALUES (6, 7), (7, 6)"
 ```
+
+**Creating new metadata fields:**
+Fields must be linked to resource types via the join table, or API `update_field` will silently fail.
+
+```bash
+# 1. Create the field
+./db.sh "INSERT INTO resource_type_field (ref, name, title, type, tab, global, active) 
+  VALUES (101, 'englishtranslation', 'English Translation', 5, 2, 1, 1)"
+
+# 2. Link to resource types (CRITICAL - without this, API updates fail)
+./db.sh "INSERT IGNORE INTO resource_type_field_resource_type 
+  (resource_type_field, resource_type) VALUES 
+  (101, 0), (101, 1), (101, 2), (101, 3), (101, 4)"
+
+# Verify field is linked
+./db.sh "SELECT * FROM resource_type_field_resource_type WHERE resource_type_field = 101"
+```
+
+**SSH Rate Limiting:**
+Render SSH connections are rate-limited. Space out multiple queries:
+```bash
+# Add delays between commands
+./db.sh "query1" && sleep 5 && ./db.sh "query2"
+```
+
+**SSH Host Key Setup:**
+To avoid host key warnings, add Render's official key to known_hosts:
+```bash
+# Oregon region
+echo "ssh.oregon.render.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFON8eay2FgHDBIVOLxWn/AWnsDJhCVvlY1igWEFoLD2" >> ~/.ssh/known_hosts
+```
+
+Other regions: [render.com/docs/ssh](https://render.com/docs/ssh#renders-public-key-fingerprints)
 
 ### Translate OCR Text (Claude Opus 4.5)
 ```bash
@@ -237,6 +316,31 @@ python process_yadvashem_batch.py \
   --hebrew-pages 21-34 \
   --dry-run
 ```
+
+### Upload Processed Documents to ResourceSpace
+```bash
+cd scripts
+# Upload Polish testimony (creates resource, populates OCR/translation fields)
+RS_BASE_URL="https://your-instance.onrender.com" \
+RS_API_KEY="your-api-key" \
+python upload_testimony.py --resource-dir downloads/doc_123/resource_polish
+
+# Upload Hebrew translation linked to Polish resource (ID 6)
+RS_BASE_URL="https://your-instance.onrender.com" \
+RS_API_KEY="your-api-key" \
+python upload_testimony.py --resource-dir downloads/doc_123/resource_hebrew --related-to 6
+```
+
+**Expected directory structure:**
+```
+resource_polish/
+├── metadata.json          # Title, description, keywords
+├── ocr_combined.txt       # Combined OCR text
+├── translation_combined.txt  # Combined English translation
+└── page_01.jpg - page_XX.jpg  # Page images
+```
+
+Note: Images must still be uploaded manually via UI (API file upload requires server-side path configuration).
 
 ### Generate TTS Audio
 ```bash
@@ -289,7 +393,12 @@ python generate_tts.py --list-voices
 ### Transcription Sync
 - `RS_API_KEY` - Required for sync_transcription.py
 
-### Document AI OCR
+### Google Cloud OCR
+
+**Vision API (simpler):**
+- `GOOGLE_API_KEY` - Google Cloud API key (enable Vision API in console)
+
+**Document AI (advanced):**
 - `GOOGLE_APPLICATION_CREDENTIALS` - Path to service account JSON key
 - `DOCUMENTAI_PROJECT_ID` - GCP project ID
 - `DOCUMENTAI_LOCATION` - Processor region (us or eu)
@@ -347,12 +456,19 @@ sign = sha256(api_key + query_string)
 ```
 
 Key endpoints used:
+- `create_resource` - Create new resource (returns resource ID)
 - `get_resource_data` - Verify resource exists
 - `get_resource_field_data` - Fetch field values
-- `update_field` - Write single field
+- `update_field` - Write single field (returns `false` if field not linked to resource type!)
 - `get_resource_type_fields` - List field definitions
 - `add_alternative_file` - Create alt file record (DB only, no file copy)
 - `get_alternative_files` - List alternative files for a resource
+- `do_search` - Search resources
+
+**Linking related resources** (no direct API, use database):
+```sql
+INSERT IGNORE INTO resource_related (resource, related) VALUES (6, 7), (7, 6);
+```
 
 ## Plugin Development
 
