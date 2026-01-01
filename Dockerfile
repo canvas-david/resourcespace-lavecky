@@ -34,10 +34,12 @@ RUN apt-get update && apt-get install -y \
     unzip \
     gettext-base \
     mysql-client \
+    openssh-server \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 # Note: OpenCV/Python removed - AI Faces runs as separate 'faces' service (InsightFace)
 # Note: mysql-client added for database initialization checks
+# Note: openssh-server added for Render SSH access
 
 RUN sed -i -e "s/upload_max_filesize\s*=\s*2M/upload_max_filesize = 2G/g" /etc/php/8.3/apache2/php.ini \
  && sed -i -e "s/post_max_size\s*=\s*8M/post_max_size = 2G/g" /etc/php/8.3/apache2/php.ini \
@@ -66,6 +68,9 @@ COPY docker/config.php.template /docker/config.php.template
 
 RUN chmod +x /entrypoint.sh \
  && chmod +x /etc/cron.daily/resourcespace
+
+# SSH access for Render (https://render.com/docs/ssh#docker-specific-configuration)
+RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh
 
 EXPOSE 80
 
