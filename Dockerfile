@@ -65,6 +65,7 @@ RUN rm -f index.html \
 COPY cronjob /etc/cron.daily/resourcespace
 COPY entrypoint.sh /entrypoint.sh
 COPY docker/config.php.template /docker/config.php.template
+COPY scripts/ /var/www/html/scripts/
 
 RUN chmod +x /entrypoint.sh \
  && chmod +x /etc/cron.daily/resourcespace
