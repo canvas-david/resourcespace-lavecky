@@ -113,13 +113,24 @@ function tts_audio_get_url($ref)
         return null;
     }
     
-    // Get the alternative file path
+    // Get the alternative file details
     $alt_ref = $alt['ref'];
-    $ext = $alt['file_extension'];
+    $ext = $alt['file_extension'] ?? 'mp3';
     
-    // Build the URL to access the alternative file
-    // ResourceSpace typically serves alternative files via pages/download.php
-    return $baseurl . '/pages/download.php?ref=' . $ref . '&alternative=' . $alt_ref . '&ext=' . $ext . '&k=';
+    // Use get_resource_path to get the proper file URL with scramble key
+    // This handles the storage path correctly
+    $file_path = get_resource_path($ref, true, "", false, $ext, true, 1, false, "", $alt_ref);
+    
+    if (!empty($file_path) && file_exists($file_path)) {
+        // Convert file path to URL
+        $url_path = get_resource_path($ref, false, "", false, $ext, true, 1, false, "", $alt_ref);
+        if (!empty($url_path)) {
+            return $url_path;
+        }
+    }
+    
+    // Fallback to download.php with proper parameters
+    return $baseurl . '/pages/download.php?ref=' . $ref . '&alternative=' . $alt_ref . '&ext=' . $ext . '&k=&direct=1';
 }
 
 /**
