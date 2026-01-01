@@ -2,14 +2,20 @@
 """
 ResourceSpace Transcription Sync
 
-Syncs OCR and transcription layers to ResourceSpace following archival rules:
+Syncs OCR, transcription, and translation layers to ResourceSpace following archival rules:
 - OCR Text (Original): IMMUTABLE once set
 - Transcription (Cleaned – Literal): Write-once by default, --force-literal to update
 - Transcription (Reader Formatted): Iterable, updates when content changes
+- English Translation: Iterable, --force-translation to update
 
 Usage:
+    # Sync OCR with translation
+    sync_transcription --resource-id 123 --ocr ocr.txt --translation translated.txt \
+        --lang pl --version v1.2.0
+    
+    # Full pipeline
     sync_transcription --resource-id 123 --ocr ocr.txt --literal literal.txt \
-        --formatted formatted.txt --lang de --version v1.2.0
+        --formatted formatted.txt --translation translated.txt --lang he --version v1.2.0
 
 Environment:
     RS_BASE_URL     ResourceSpace base URL (default: http://localhost:8080)
@@ -60,6 +66,7 @@ class FieldIDs:
     OCR_TEXT_ORIGINAL: int = 88              # Immutable
     TRANSCRIPTION_LITERAL: int = 89          # Write-once default
     TRANSCRIPTION_FORMATTED: int = 96        # Iterable
+    ENGLISH_TRANSLATION: int = 101           # Machine translation output
     
     # OCR metadata
     OCR_ENGINE: int = 90
@@ -78,6 +85,9 @@ class FieldIDs:
     
     # Audit
     PROCESSING_VERSION: int = 100
+    
+    # Translation metadata
+    TRANSLATION_SOURCE_LANGUAGE: int = 102
 
 
 FIELDS = FieldIDs()
@@ -357,9 +367,11 @@ class TranscriptionSync:
         ocr_text: Optional[str] = None,
         literal_text: Optional[str] = None,
         formatted_text: Optional[str] = None,
+        translation_text: Optional[str] = None,
         language: Optional[str] = None,
         version: Optional[str] = None,
-        force_literal: bool = False
+        force_literal: bool = False,
+        force_translation: bool = False
     ) -> SyncResult:
         """
         Sync all transcription layers to ResourceSpace.
@@ -369,9 +381,11 @@ class TranscriptionSync:
             ocr_text: Raw OCR output (write-once, immutable)
             literal_text: Cleaned literal transcription (write-once default)
             formatted_text: Reader formatted transcription (iterable)
-            language: Detected language code
+            translation_text: Machine-translated English text (iterable)
+            language: Detected/source language code
             version: Pipeline version string
             force_literal: Allow overwriting literal transcription
+            force_translation: Allow overwriting translation
         
         Returns:
             SyncResult with all changes made
@@ -393,6 +407,10 @@ class TranscriptionSync:
             
             if formatted_text is not None:
                 self._sync_formatted(resource_id, formatted_text, current, result)
+            
+            if translation_text is not None:
+                self._sync_translation(resource_id, translation_text, language, 
+                                      force_translation, current, result)
             
             # Always write version on successful sync
             if version:
@@ -619,6 +637,71 @@ class TranscriptionSync:
             new_value=notes
         ))
     
+    def _sync_translation(
+        self,
+        resource_id: int,
+        translation_text: str,
+        source_language: Optional[str],
+        force: bool,
+        current: Dict[int, str],
+        result: SyncResult
+    ) -> None:
+        """
+        Sync machine translation layer (iterable, can be re-translated).
+        
+        Rule: Update when content changes. Can be overwritten with --force-translation.
+        """
+        existing = current.get(self.fields.ENGLISH_TRANSLATION, "")
+        
+        # Check if already populated and force not set
+        if not self.is_empty(existing) and not force:
+            if self.values_equal(existing, translation_text):
+                result.add_change(FieldChange(
+                    field_id=self.fields.ENGLISH_TRANSLATION,
+                    field_name="English Translation",
+                    action="unchanged",
+                    reason="content identical"
+                ))
+                return
+            else:
+                result.add_change(FieldChange(
+                    field_id=self.fields.ENGLISH_TRANSLATION,
+                    field_name="English Translation",
+                    action="skipped",
+                    reason=f"already set ({len(existing)} chars), use --force-translation to update"
+                ))
+                return
+        
+        if self.values_equal(existing, translation_text):
+            result.add_change(FieldChange(
+                field_id=self.fields.ENGLISH_TRANSLATION,
+                field_name="English Translation",
+                action="unchanged",
+                reason="content identical"
+            ))
+            return
+        
+        action = "updated" if not self.is_empty(existing) else "created"
+        
+        # Write translation
+        self.update_field(resource_id, self.fields.ENGLISH_TRANSLATION, translation_text)
+        result.add_change(FieldChange(
+            field_id=self.fields.ENGLISH_TRANSLATION,
+            field_name="English Translation",
+            action=action,
+            new_value=f"{len(translation_text)} chars"
+        ))
+        
+        # Write source language if provided
+        if source_language:
+            self.update_field(resource_id, self.fields.TRANSLATION_SOURCE_LANGUAGE, source_language)
+            result.add_change(FieldChange(
+                field_id=self.fields.TRANSLATION_SOURCE_LANGUAGE,
+                field_name="translation_source_language",
+                action=action,
+                new_value=source_language
+            ))
+    
     def _write_version(
         self,
         resource_id: int,
@@ -686,6 +769,11 @@ class TranscriptionSync:
                 "method": get_val(self.fields.FORMATTING_METHOD),
                 "review_status": get_val(self.fields.FORMATTING_REVIEW_STATUS),
                 "notes": get_val(self.fields.FORMATTING_NOTES),
+            },
+            "translation": {
+                "populated": get_len(self.fields.ENGLISH_TRANSLATION) > 0,
+                "chars": get_len(self.fields.ENGLISH_TRANSLATION),
+                "source_language": get_val(self.fields.TRANSLATION_SOURCE_LANGUAGE),
             },
             "processing_version": get_val(self.fields.PROCESSING_VERSION),
         }
@@ -781,15 +869,22 @@ Environment variables:
   RS_API_KEY      API private key (required)
 
 Examples:
-  # Full sync
-  sync_transcription --resource-id 123 --ocr ocr.txt --literal literal.txt \\
-      --formatted formatted.txt --lang de --version v1.2.0
+  # Full sync with OCR and translation
+  sync_transcription --resource-id 123 --ocr ocr.txt --translation translated.txt \\
+      --lang pl --version v1.2.0
   
   # OCR only
-  sync_transcription --resource-id 123 --ocr ocr.txt --lang en
+  sync_transcription --resource-id 123 --ocr ocr.txt --lang he
   
-  # Update formatted only (iterable)
-  sync_transcription --resource-id 123 --formatted formatted_v2.txt --version v1.3.0
+  # Translation only (from Polish source)
+  sync_transcription --resource-id 123 --translation translated_en.txt --lang pl
+  
+  # Full transcription pipeline
+  sync_transcription --resource-id 123 --ocr ocr.txt --literal literal.txt \\
+      --formatted formatted.txt --translation translated.txt --lang de --version v1.3.0
+  
+  # Force translation update
+  sync_transcription --resource-id 123 --translation new_translation.txt --force-translation
   
   # Force literal update
   sync_transcription --resource-id 123 --literal corrected.txt --force-literal
@@ -823,14 +918,17 @@ Examples:
     parser.add_argument("--ocr", metavar="FILE", help="OCR text file (write-once, immutable)")
     parser.add_argument("--literal", metavar="FILE", help="Literal transcription file (write-once default)")
     parser.add_argument("--formatted", metavar="FILE", help="Reader formatted file (iterable)")
+    parser.add_argument("--translation", metavar="FILE", help="English translation file (iterable)")
     
     # Metadata
-    parser.add_argument("--lang", help="Detected language code (e.g., en, de, he)")
+    parser.add_argument("--lang", help="Detected/source language code (e.g., en, de, he, pl)")
     parser.add_argument("--version", help="Pipeline version (e.g., v1.2.0)")
     
     # Flags
     parser.add_argument("--force-literal", action="store_true",
                        help="Allow overwriting literal transcription")
+    parser.add_argument("--force-translation", action="store_true",
+                       help="Allow overwriting English translation")
     
     # TTS options
     parser.add_argument("--generate-tts", action="store_true",
@@ -884,7 +982,7 @@ Examples:
                 print("=" * 50)
                 print(f"Processing Version: {status['processing_version'] or '(not set)'}")
                 print()
-                for layer in ["ocr", "literal", "formatted"]:
+                for layer in ["ocr", "literal", "formatted", "translation"]:
                     data = status[layer]
                     print(f"{layer.upper()}:")
                     print(f"  Populated: {data['populated']} ({data['chars']} chars)")
@@ -898,14 +996,15 @@ Examples:
             return 1
     
     # Sync action
-    if not any([args.ocr, args.literal, args.formatted]):
-        parser.error("At least one of --ocr, --literal, or --formatted required")
+    if not any([args.ocr, args.literal, args.formatted, args.translation]):
+        parser.error("At least one of --ocr, --literal, --formatted, or --translation required")
     
     try:
         # Read files
         ocr_text = read_file(args.ocr) if args.ocr else None
         literal_text = read_file(args.literal) if args.literal else None
         formatted_text = read_file(args.formatted) if args.formatted else None
+        translation_text = read_file(args.translation) if args.translation else None
         
         # Execute sync
         result = sync.sync(
@@ -913,9 +1012,11 @@ Examples:
             ocr_text=ocr_text,
             literal_text=literal_text,
             formatted_text=formatted_text,
+            translation_text=translation_text,
             language=args.lang,
             version=args.version,
-            force_literal=args.force_literal
+            force_literal=args.force_literal,
+            force_translation=args.force_translation
         )
         
         if args.json:

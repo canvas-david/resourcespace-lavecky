@@ -40,10 +40,14 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `docker/mysql/` | MySQL container for Render |
 | `docker/backup/` | Backup cron job with R2 upload |
 | `docker/faces/` | InsightFace AI service |
-| `plugins/tts_audio/` | TTS audio generation plugin |
+| `plugins/tts_audio/` | ElevenLabs TTS audio generation plugin |
+| `plugins/tts_audio/pages/generate.php` | TTS generation endpoint (calls ElevenLabs API) |
+| `plugins/tts_audio/hooks/view.php` | Audio player panel on resource view |
 | `scripts/db.sh` | Render MySQL helper (SSH database access) |
 | `scripts/create_ocr_fields.sql` | OCR/transcription field schema |
 | `scripts/process_ocr.py` | Google Document AI OCR processor |
+| `scripts/translate_ocr.py` | Claude Opus 4.5 translation (Anthropic API) |
+| `scripts/process_yadvashem_batch.py` | Batch OCR + translation pipeline |
 | `scripts/sync_transcription.py` | Archival transcription sync CLI |
 | `scripts/generate_tts.py` | ElevenLabs TTS audio generator |
 | `.github/workflows/build-base.yml` | GitHub Actions to build/push base image |
@@ -78,6 +82,7 @@ The sync_transcription.py enforces archival integrity:
 | OCR Text (Original) | **IMMUTABLE** - never overwrite |
 | Transcription (Literal) | Write-once, `--force-literal` to update |
 | Transcription (Formatted) | Iterable - updates allowed |
+| English Translation | Iterable, `--force-translation` to update |
 | Review Status | Never downgrades from `reviewed`/`approved` |
 
 ### Metadata Tab Structure
@@ -86,7 +91,7 @@ Fields are organized into tabs for different user workflows:
 | Tab | Purpose | Fields |
 |-----|---------|--------|
 | 1. Default | Standard asset metadata | Date, Filename, Keywords, etc. |
-| 2. Transcription | Readable content | Literal Transcription, Reader-Friendly Version |
+| 2. Transcription | Readable content | Literal Transcription, Reader-Friendly Version, English Translation |
 | 3. Review | Editorial workflow | Transcription Status, Notes, Formatting Status, Notes |
 | 4. Technical | Processing details | OCR Status, Engine, Language, Methods, Pipeline Version |
 | 5. Archival | Raw source data | Original OCR Output |
@@ -210,6 +215,29 @@ ssh srv-d5acinkhg0os73cr9gq0@ssh.oregon.render.com \
 ./db.sh "UPDATE resource_type_field SET order_by = 10 WHERE ref = 89"
 ```
 
+### Translate OCR Text (Claude Opus 4.5)
+```bash
+cd scripts
+# Translate Polish OCR to English (uses Opus 4.5 by default)
+python translate_ocr.py --input ocr_pl.txt --source pl --output translated.txt
+
+# Translate Hebrew with faster/cheaper Sonnet model
+python translate_ocr.py --input ocr_he.txt --source he --model sonnet --output out.txt
+
+# Batch process Yad Vashem documents (OCR + Translation)
+python process_yadvashem_batch.py \
+  --input-dir downloads/yadvashem_3555547 \
+  --polish-pages 1-20 \
+  --hebrew-pages 21-34
+
+# Dry run to preview batch processing
+python process_yadvashem_batch.py \
+  --input-dir downloads/yadvashem_3555547 \
+  --polish-pages 1-20 \
+  --hebrew-pages 21-34 \
+  --dry-run
+```
+
 ### Generate TTS Audio
 ```bash
 cd scripts
@@ -267,6 +295,9 @@ python generate_tts.py --list-voices
 - `DOCUMENTAI_LOCATION` - Processor region (us or eu)
 - `DOCUMENTAI_PROCESSOR_ID` - OCR processor ID
 
+### Claude Translation (Anthropic)
+- `ANTHROPIC_API_KEY` - Anthropic API key for Claude Opus 4.5 translation
+
 ### ElevenLabs TTS
 - `ELEVENLABS_API_KEY` - ElevenLabs API key for TTS generation (set in Render dashboard)
 
@@ -320,6 +351,117 @@ Key endpoints used:
 - `get_resource_field_data` - Fetch field values
 - `update_field` - Write single field
 - `get_resource_type_fields` - List field definitions
+- `add_alternative_file` - Create alt file record (DB only, no file copy)
+- `get_alternative_files` - List alternative files for a resource
+
+## Plugin Development
+
+### Plugin YAML Format
+The plugin YAML must follow ResourceSpace conventions:
+
+```yaml
+name: my_plugin          # Must match folder name (lowercase, no spaces)
+title: My Plugin         # Display name in admin
+author: Your Name
+version: 1.0.0
+desc: Plugin description  # NOT 'description'
+icon: fa fa-icon-name
+category: AI             # Category string, not number
+config_url: /plugins/my_plugin/pages/setup.php
+disable_group_select: 0
+```
+
+**Common mistakes:**
+- Using `description` instead of `desc`
+- Using `name` for display (use `title`)
+- Setting `category` as a number instead of string
+
+### Hook Naming Convention
+```php
+// Format: Hook{Pluginname}{Page}{Hookpoint}
+function HookMy_pluginViewCustompanels() { ... }
+function HookMy_pluginAllInitialise() { ... }
+```
+
+### Adding Panels to Resource View
+Use the `Custompanels` hook with `RecordBox`/`RecordPanel` structure:
+
+```php
+function HookMy_pluginViewCustompanels() {
+    global $ref, $baseurl;
+    ?>
+    <div class="RecordBox">
+        <div class="RecordPanel">
+            <div class="Title">
+                <i class="fa fa-icon"></i>&nbsp;Panel Title
+            </div>
+            <!-- Panel content -->
+        </div>
+    </div>
+    <?php
+    return false; // Allow other panels
+}
+```
+
+### PHP Function Gotchas
+
+**get_config_option()** - Third parameter is by reference:
+```php
+// WRONG - can't pass string literal by reference
+$value = get_config_option(null, 'option_name', 'default');
+
+// CORRECT
+$value = 'default';
+get_config_option([], 'option_name', $value, 'default');
+```
+
+**CSRF Tokens** - Required for POST requests:
+```php
+// In PHP: Generate token
+$csrf_token = generateCSRFToken($usersession, 'form_id');
+
+// In JavaScript: Include in AJAX
+var params = 'data=value&CSRFToken=' + csrfToken;
+```
+
+### Alternative File Upload
+`add_alternative_file()` only creates the database record. You must manually copy the file:
+
+```php
+// 1. Create DB record
+$alt_ref = add_alternative_file($ref, 'Name', 'Description', 'file.mp3', 'mp3', $size, '');
+
+// 2. Get target path (includes scramble key)
+$target_path = get_resource_path($ref, true, "", true, "mp3", -1, 1, false, "", $alt_ref);
+
+// 3. Copy file to filestore
+copy($temp_file, $target_path);
+chmod($target_path, 0664);
+```
+
+**File path format:** `{ref}_alt_{alt_ref}_{scramble}.{ext}`
+
+### Audio/Video URL for Inline Playback
+Use `noattach=true` for streaming instead of download:
+```php
+$url = $baseurl . '/pages/download.php?ref=' . $ref . '&ext=mp3&alternative=' . $alt_ref . '&noattach=true&k=';
+```
+
+### Environment Variables in Apache/PHP
+Container environment variables aren't automatically available to Apache. Export them in `entrypoint.sh`:
+
+```bash
+# Add to /etc/apache2/envvars for PHP access via getenv()
+if [ -n "$MY_API_KEY" ]; then
+    echo "export MY_API_KEY='$MY_API_KEY'" >> /etc/apache2/envvars
+fi
+```
+
+### Disabling Plugins via Database
+```sql
+-- Remove plugin from active plugins
+DELETE FROM plugins WHERE name='plugin_name';
+```
 
 ## Backups
 

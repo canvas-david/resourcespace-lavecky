@@ -27,8 +27,8 @@ UPDATE tab SET name = 'Archival' WHERE ref = 5;
 -- CLEAN SLATE
 -- =============================================================================
 
-DELETE FROM resource_type_field WHERE ref IN (88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100);
-DELETE FROM resource_data WHERE resource_type_field IN (88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100);
+DELETE FROM resource_type_field WHERE ref IN (88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102);
+DELETE FROM resource_data WHERE resource_type_field IN (88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102);
 
 -- =============================================================================
 -- TAB 2: TRANSCRIPTION (Readable content for end users)
@@ -41,6 +41,14 @@ VALUES (89, 'transcriptioncleaned', 'Literal Transcription', 5, 10, 1, 1, 2, 1, 
 -- Reader-Friendly Version - Field 96
 INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, display_field, tab, advanced_search, simple_search, help_text, hide_when_uploading, active)
 VALUES (96, 'transcriptionreaderformatted', 'Reader-Friendly Version', 5, 20, 1, 1, 2, 1, 0, 'Formatted transcription with modern punctuation and paragraphs', 1, 1);
+
+-- English Translation - Field 101
+INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, display_field, tab, advanced_search, simple_search, help_text, hide_when_uploading, active)
+VALUES (101, 'englishtranslation', 'English Translation', 5, 30, 1, 1, 2, 1, 1, 'Machine-translated English version of the OCR text', 1, 1);
+
+-- Translation Source Language - Field 102
+INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, display_field, tab, advanced_search, simple_search, help_text, hide_when_uploading, active)
+VALUES (102, 'translationsourcelanguage', 'Translation Source Language', 0, 40, 1, 1, 2, 1, 0, 'Original language of the document (e.g., pl, he, de)', 1, 1);
 
 -- =============================================================================
 -- TAB 3: REVIEW (Status and notes for reviewers/editors)
@@ -105,5 +113,5 @@ VALUES (88, 'ocrtext', 'Original OCR Output', 5, 10, 1, 1, 5, 1, 0, 'Raw OCR out
 SELECT t.name as tab_name, f.ref, f.title, f.order_by 
 FROM resource_type_field f 
 JOIN tab t ON f.tab = t.ref 
-WHERE f.ref BETWEEN 88 AND 100 
+WHERE f.ref BETWEEN 88 AND 102 
 ORDER BY t.order_by, f.order_by;

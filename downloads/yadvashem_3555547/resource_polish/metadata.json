@@ -1,0 +1,37 @@
+{
+  "title": "Samuel Kostman Testimony - Polish Original",
+  "description": "Original Polish testimony of Samuel Kostman, recorded April 14-15, 1960 by Ryszard Luninski. Kostman recounts his experiences as a Jewish resistance fighter in Borysław before WWII, his 10-year prison sentence for defending Jews against antisemitic attacks, his escape during the 1939 evacuation, service in the Red Army, and post-war life in Poland before emigrating to Israel in 1958.",
+  "source": "Yad Vashem Collections",
+  "source_url": "https://collections.yadvashem.org/en/documents/3555547",
+  "document_id": "3555547",
+  "language": "pl",
+  "language_name": "Polish",
+  "document_type": "testimony",
+  "pages": "1-20",
+  "page_count": 20,
+  "date_recorded": "1960-04-15",
+  "interviewer": "Ryszard Luninski",
+  "witness": {
+    "name": "Samuel Kostman",
+    "alias": "Rozenbaum",
+    "birth_date": "1908-05-03",
+    "birth_place": "Borysław",
+    "occupation": "automobile mechanic"
+  },
+  "keywords": [
+    "Holocaust testimony",
+    "Borysław",
+    "Jewish resistance",
+    "antisemitism",
+    "Poland",
+    "Red Army",
+    "WWII",
+    "Samuel Kostman"
+  ],
+  "related_resource": "Hebrew translation (pages 21-34)",
+  "files": {
+    "images": "page_01.jpg through page_20.jpg",
+    "ocr": "ocr_combined.txt",
+    "translation": "translation_combined.txt"
+  }
+}

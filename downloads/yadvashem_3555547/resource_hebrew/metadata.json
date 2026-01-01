@@ -1,0 +1,38 @@
+{
+  "title": "Samuel Kostman Testimony - Hebrew Translation",
+  "description": "Hebrew translation of Samuel Kostman's testimony, prepared by Yad Vashem. Original testimony recorded in Polish on April 14-15, 1960. Kostman recounts his experiences as a Jewish resistance fighter in Borysław before WWII, his 10-year prison sentence for defending Jews against antisemitic attacks, his escape during the 1939 evacuation, service in the Red Army, and post-war life in Poland before emigrating to Israel in 1958.",
+  "source": "Yad Vashem Collections",
+  "source_url": "https://collections.yadvashem.org/en/documents/3555547",
+  "document_id": "3555547",
+  "language": "he",
+  "language_name": "Hebrew",
+  "document_type": "testimony",
+  "pages": "21-34",
+  "page_count": 14,
+  "date_recorded": "1960-04-15",
+  "interviewer": "Ryszard Luninski (Richard Lewinsky)",
+  "witness": {
+    "name": "Samuel Kostman",
+    "alias": "Rozenbaum",
+    "birth_date": "1908-05-03",
+    "birth_place": "Borysław",
+    "occupation": "automobile mechanic"
+  },
+  "keywords": [
+    "Holocaust testimony",
+    "Borysław",
+    "Jewish resistance",
+    "antisemitism",
+    "Poland",
+    "Red Army",
+    "WWII",
+    "Samuel Kostman"
+  ],
+  "related_resource": "Polish original (pages 1-20)",
+  "translation_of": "Polish original",
+  "files": {
+    "images": "page_21.jpg through page_34.jpg",
+    "ocr": "ocr_combined.txt",
+    "translation": "translation_combined.txt"
+  }
+}
