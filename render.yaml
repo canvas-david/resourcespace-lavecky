@@ -23,10 +23,15 @@ services:
       sizeGB: 10
 
   # ResourceSpace Web Service
+  # Uses pre-built base image from GHCR for fast builds
+  # Configure Docker credentials in Render dashboard: Settings > Docker Credentials
+  #   Registry: ghcr.io
+  #   Username: <github-username>
+  #   Password: <github-pat-with-read:packages>
   - type: web
     name: resourcespace
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.render
     plan: starter
     healthCheckPath: /login.php
     envVars:

@@ -30,7 +30,9 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 
 | Path | Purpose |
 |------|---------|
-| `Dockerfile` | Main ResourceSpace container |
+| `Dockerfile` | Full ResourceSpace container (local dev) |
+| `Dockerfile.render` | Lightweight Render build (uses GHCR base image) |
+| `docker/base/Dockerfile` | Base image with apt packages + RS source |
 | `docker-compose.yaml` | Local development stack |
 | `render.yaml` | Render.com production deployment |
 | `docker/config.php.template` | Config template with env var placeholders |
@@ -44,6 +46,7 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `scripts/process_ocr.py` | Google Document AI OCR processor |
 | `scripts/sync_transcription.py` | Archival transcription sync CLI |
 | `scripts/generate_tts.py` | ElevenLabs TTS audio generator |
+| `.github/workflows/build-base.yml` | GitHub Actions to build/push base image |
 
 ## Critical Rules
 
@@ -102,14 +105,41 @@ docker compose up -d
 ```
 
 ### Deploy to Render
-1. Set secrets in Render dashboard (see README.md):
+1. **First time only:** Build and push base image (see "Rebuild Base Image" below)
+2. Configure GHCR credentials in Render dashboard:
+   - Go to resourcespace service → Settings → Docker Credentials
+   - Registry: `ghcr.io`
+   - Username: your GitHub username
+   - Password: GitHub PAT with `read:packages` scope
+3. Set secrets in Render dashboard (see README.md):
    - `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD` on mysql service
    - `RS_SCRAMBLE_KEY`, `RS_BASE_URL`, `RS_EMAIL_*` on resourcespace service
-2. Push to trigger auto-deploy
-3. Database auto-initializes on first run (no setup wizard needed)
-4. Login with `admin` / `admin` and change password immediately
-5. Create backup user in MySQL for backups
-6. Configure AI Faces plugin URL: `http://faces:8001`
+4. Push to trigger auto-deploy (~10-20 seconds with base image)
+5. Database auto-initializes on first run (no setup wizard needed)
+6. Login with `admin` / `admin` and change password immediately
+7. Create backup user in MySQL for backups
+8. Configure AI Faces plugin URL: `http://faces:8001`
+
+### Rebuild Base Image
+The base image contains apt packages and ResourceSpace source. Rebuild when:
+- Upgrading ResourceSpace version
+- Adding/removing system packages
+- Changing PHP configuration
+
+**Option 1: GitHub Actions (recommended)**
+```bash
+# Manual trigger via GitHub UI or CLI
+gh workflow run build-base.yml -f version=10.7
+```
+
+**Option 2: Local build**
+```bash
+# Build and push manually
+docker build -t ghcr.io/canvas-david/resourcespace-base:10.7 -f docker/base/Dockerfile .
+docker push ghcr.io/canvas-david/resourcespace-base:10.7
+```
+
+The base image is private. Render pulls it using configured Docker credentials.
 
 ### Process OCR with Document AI
 ```bash
@@ -245,11 +275,19 @@ python generate_tts.py --list-voices
 
 ## Testing Changes
 
-### Dockerfile Changes
+### Dockerfile Changes (Local)
 ```bash
+# Local development uses full Dockerfile
 docker compose build resourcespace
 docker compose up -d resourcespace
 docker compose logs -f resourcespace
+```
+
+### Dockerfile.render Changes
+```bash
+# Test the Render build locally (requires base image)
+docker build -t resourcespace-test -f Dockerfile.render .
+docker run --rm -p 8080:80 resourcespace-test
 ```
 
 ### Plugin Changes

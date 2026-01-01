@@ -1,0 +1,23 @@
+# Lightweight Dockerfile for Render.com deployment
+# Uses pre-built base image from GHCR for fast builds (~10-20 seconds)
+#
+# Base image must be built first:
+#   docker build -t ghcr.io/canvas-david/resourcespace-base:10.7 -f docker/base/Dockerfile .
+#   docker push ghcr.io/canvas-david/resourcespace-base:10.7
+
+FROM ghcr.io/canvas-david/resourcespace-base:10.7
+
+# Copy local configuration and customizations (fast)
+COPY cronjob /etc/cron.daily/resourcespace
+COPY entrypoint.sh /entrypoint.sh
+COPY docker/config.php.template /docker/config.php.template
+COPY scripts/ /var/www/html/scripts/
+COPY plugins/ /var/www/html/plugins/
+
+# Set permissions
+RUN chmod +x /entrypoint.sh \
+ && chmod +x /etc/cron.daily/resourcespace
+
+EXPOSE 80
+
+CMD ["/entrypoint.sh"]
