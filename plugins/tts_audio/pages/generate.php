@@ -2,7 +2,8 @@
 /**
  * TTS Audio Generation Endpoint
  * 
- * AJAX endpoint to trigger TTS generation for a resource
+ * AJAX endpoint to trigger TTS generation for a resource.
+ * Python generates the audio file, PHP handles the ResourceSpace upload.
  */
 
 include '../../../include/boot.php';
@@ -50,8 +51,16 @@ if (!tts_audio_has_transcription($ref)) {
     exit('No transcription text available');
 }
 
-// Check if audio already exists (unless force)
-if (!$force && tts_audio_has_audio($ref)) {
+// If force, delete existing TTS audio
+if ($force) {
+    $existing = tts_audio_get_alternative($ref);
+    if ($existing) {
+        delete_alternative_file($ref, $existing['ref']);
+    }
+}
+
+// Check if audio already exists (after potential deletion)
+if (tts_audio_has_audio($ref)) {
     if ($ajax) {
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'message' => 'Audio already exists', 'skipped' => true]);
@@ -60,163 +69,128 @@ if (!$force && tts_audio_has_audio($ref)) {
     exit('Audio already exists');
 }
 
-// Get configuration
-$python_path = 'python3';
-$script_path = '';
-get_config_option([], 'tts_audio_python_path', $python_path, 'python3');
-get_config_option([], 'tts_audio_script_path', $script_path, '');
-
-// Default script path if not configured
-if (empty($script_path)) {
-    // Try to find the script relative to ResourceSpace installation
-    $possible_paths = [
-        dirname(__FILE__, 5) . '/scripts/generate_tts.py',  // Workspace root
-        '/var/www/html/scripts/generate_tts.py',             // Docker default
-        __DIR__ . '/../../../../scripts/generate_tts.py',    // Relative
-    ];
-    
-    foreach ($possible_paths as $path) {
-        if (file_exists($path)) {
-            $script_path = $path;
-            break;
-        }
-    }
-}
-
-if (empty($script_path) || !file_exists($script_path)) {
+// Get transcription text
+$transcription = get_data_by_field($ref, TTS_SOURCE_FIELD);
+if (empty(trim($transcription))) {
     if ($ajax) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'TTS script not found. Please configure the script path in plugin settings.']);
+        echo json_encode(['success' => false, 'message' => 'No transcription text found']);
         exit;
     }
-    exit('TTS script not found');
+    exit('No transcription text found');
 }
 
-// Update status to pending
-tts_audio_update_status($ref, 'pending');
-
-// Build command
-$cmd_parts = [
-    escapeshellcmd($python_path),
-    escapeshellarg($script_path),
-    '--resource-id', escapeshellarg($ref),
-    '--voice', escapeshellarg($voice),
-];
-
-if ($force) {
-    $cmd_parts[] = '--force';
-}
-
-$cmd_parts[] = '--json';
-
-$cmd = implode(' ', $cmd_parts);
-
-// Set up environment variables
-$env = [
-    'RS_BASE_URL' => $baseurl,
-    'RS_USER' => 'admin',  // Use API user
-];
-
-// Get environment variables that should already be set on the server
-$required_env = ['RS_API_KEY', 'ELEVENLABS_API_KEY'];
-foreach ($required_env as $var) {
-    $value = getenv($var);
-    if ($value !== false) {
-        $env[$var] = $value;
-    }
-}
-
-// Check required environment variables
-if (empty($env['RS_API_KEY']) || empty($env['ELEVENLABS_API_KEY'])) {
+// Get ElevenLabs API key
+$elevenlabs_key = getenv('ELEVENLABS_API_KEY');
+if (empty($elevenlabs_key)) {
     if ($ajax) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Missing required environment variables (RS_API_KEY, ELEVENLABS_API_KEY)']);
+        echo json_encode(['success' => false, 'message' => 'ELEVENLABS_API_KEY not configured']);
         exit;
     }
-    exit('Missing required environment variables');
+    exit('ELEVENLABS_API_KEY not configured');
 }
 
-// Execute the script
-$descriptorspec = [
-    0 => ['pipe', 'r'],  // stdin
-    1 => ['pipe', 'w'],  // stdout
-    2 => ['pipe', 'w'],  // stderr
+// Voice ID mapping
+$voice_ids = [
+    'rachel' => '21m00Tcm4TlvDq8ikWAM',
+    'adam' => 'pNInz6obpgDQGcFmaJgB',
+    'antoni' => 'ErXwobaYiN019PkySvjV',
+    'charlotte' => 'XB0fDUnXU5powFXDhCwa',
+    'daniel' => 'onwK4e9ZLuTAKqWW03F9',
+    'emily' => 'LcfcDJNUP1GQjkzn1xUU',
+    'josh' => 'TxGEqnHWrfWFTfGW9XjX',
+    'matilda' => 'XrExE9yKIg1WjnnlVkGX',
+    'sam' => 'yoZ06aMxZJJ28mfd3POQ',
+    'sarah' => 'EXAVITQu4vr4xnSDxMaL',
 ];
 
-// Merge custom env with parent environment to include PATH and other system vars
-$full_env = array_merge(getenv(), $env);
+$voice_id = $voice_ids[$voice] ?? $voice_ids['rachel'];
+$model = 'eleven_multilingual_v2';
 
-// Log the command (without sensitive data)
-debug('[TTS Audio] Executing TTS generation for resource ' . $ref);
+// Call ElevenLabs API
+$api_url = "https://api.elevenlabs.io/v1/text-to-speech/{$voice_id}";
 
-// Use proc_open for better control
-$process = proc_open($cmd, $descriptorspec, $pipes, null, $full_env);
+$post_data = json_encode([
+    'text' => $transcription,
+    'model_id' => $model,
+    'voice_settings' => [
+        'stability' => 0.5,
+        'similarity_boost' => 0.75
+    ]
+]);
 
-if (is_resource($process)) {
-    // Close stdin
-    fclose($pipes[0]);
-    
-    // Read stdout
-    $stdout = stream_get_contents($pipes[1]);
-    fclose($pipes[1]);
-    
-    // Read stderr
-    $stderr = stream_get_contents($pipes[2]);
-    fclose($pipes[2]);
-    
-    // Get exit code
-    $return_var = proc_close($process);
-    
-    // Parse JSON output
-    $result = null;
-    if (!empty($stdout)) {
-        // Find the JSON part (may have log output before it)
-        if (preg_match('/\{[^{}]*"success"[^{}]*\}/s', $stdout, $matches)) {
-            $result = json_decode($matches[0], true);
-        } else {
-            $result = json_decode($stdout, true);
+$ch = curl_init($api_url);
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => $post_data,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Accept: audio/mpeg',
+        'Content-Type: application/json',
+        'xi-api-key: ' . $elevenlabs_key
+    ],
+    CURLOPT_TIMEOUT => 120
+]);
+
+$audio_data = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curl_error = curl_error($ch);
+curl_close($ch);
+
+if ($http_code !== 200 || empty($audio_data)) {
+    $error_msg = 'ElevenLabs API error';
+    if ($curl_error) {
+        $error_msg .= ": $curl_error";
+    } elseif ($http_code !== 200) {
+        $error_msg .= " (HTTP $http_code)";
+        // Try to parse error response
+        $error_json = json_decode($audio_data, true);
+        if (isset($error_json['detail']['message'])) {
+            $error_msg .= ": " . $error_json['detail']['message'];
         }
     }
     
     if ($ajax) {
         header('Content-Type: application/json');
-        
-        if ($return_var === 0 && $result && isset($result['success']) && $result['success']) {
-            echo json_encode([
-                'success' => true,
-                'message' => $result['message'] ?? 'Audio generated successfully!',
-                'voice' => $voice,
-            ]);
-        } else {
-            $error_message = 'TTS generation failed';
-            if ($result && isset($result['message'])) {
-                $error_message = $result['message'];
-            } elseif (!empty($stderr)) {
-                $error_message = trim($stderr);
-            } elseif (!empty($stdout)) {
-                $error_message = trim($stdout);
-            }
-            
-            echo json_encode([
-                'success' => false,
-                'message' => $error_message,
-            ]);
-        }
+        echo json_encode(['success' => false, 'message' => $error_msg]);
         exit;
     }
-    
-    // Non-AJAX response
-    if ($return_var === 0 && $result && isset($result['success']) && $result['success']) {
-        header('Location: ' . $baseurl . '/pages/view.php?ref=' . $ref);
-        exit;
-    } else {
-        exit('TTS generation failed: ' . ($result['message'] ?? 'Unknown error'));
-    }
-} else {
+    exit($error_msg);
+}
+
+// Save audio to temp file
+$temp_file = tempnam(sys_get_temp_dir(), 'tts_') . '.mp3';
+file_put_contents($temp_file, $audio_data);
+
+// Add as alternative file using ResourceSpace's native function
+$description = "Text-to-speech audio (voice: $voice, model: $model)";
+$alt_ref = add_alternative_file($ref, 'TTS Audio', $description, 'tts_audio.mp3', 'mp3', filesize($temp_file), '', $temp_file);
+
+// Clean up temp file
+unlink($temp_file);
+
+if (!$alt_ref) {
     if ($ajax) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Failed to execute TTS script']);
+        echo json_encode(['success' => false, 'message' => 'Failed to create alternative file']);
         exit;
     }
-    exit('Failed to execute TTS script');
+    exit('Failed to create alternative file');
 }
+
+// Success
+if ($ajax) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => true,
+        'message' => 'Audio generated successfully!',
+        'voice' => $voice,
+        'alt_ref' => $alt_ref
+    ]);
+    exit;
+}
+
+// Non-AJAX: redirect back to resource
+header('Location: ' . $baseurl . '/pages/view.php?ref=' . $ref);
+exit;

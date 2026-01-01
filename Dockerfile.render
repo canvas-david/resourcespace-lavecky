@@ -1,5 +1,5 @@
 # Lightweight Dockerfile for Render.com deployment
-# Build time test: 2026-01-01
+# Build time test: 2026-01-01-v2
 # Uses pre-built base image from GHCR for fast builds (~10-20 seconds)
 #
 # Base image must be built first:
