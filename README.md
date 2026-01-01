@@ -206,8 +206,7 @@ See `scripts/ARCHIVAL_API_REFERENCE.md` for full API documentation.
 │   │   ├── healthcheck.sh     # Container health check
 │   │   └── init.sql           # Database initialization
 │   └── config.php.template    # Config template with env var placeholders
-├── plugins/
-│   └── ocr_sidepanel/         # Custom OCR display plugin
+├── plugins/                   # Custom plugins directory
 ├── scripts/
 │   ├── sync_transcription.py  # Archival transcription sync CLI
 │   ├── ARCHIVAL_API_REFERENCE.md  # API documentation
@@ -235,8 +234,3 @@ The local `docker-compose.yaml` includes:
 - Leave the "MySQL binary path" empty
 - The container generates `config.php` automatically from environment variables
 
-## Plugins
-
-### OCR Side Panel
-
-Displays OCR text alongside the resource image on the view page. Located in `plugins/ocr_sidepanel/`.

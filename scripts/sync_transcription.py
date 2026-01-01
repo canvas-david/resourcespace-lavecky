@@ -703,6 +703,72 @@ def read_file(path: str) -> str:
     return p.read_text(encoding="utf-8")
 
 
+def generate_tts_audio(
+    base_url: str,
+    user: str,
+    api_key: str,
+    elevenlabs_key: str,
+    resource_id: int,
+    voice: str = "rachel",
+    force: bool = False
+) -> Dict[str, Any]:
+    """
+    Generate TTS audio by calling generate_tts.py.
+    
+    Returns result dict with success status and message.
+    """
+    import subprocess
+    
+    # Find generate_tts.py relative to this script
+    script_dir = Path(__file__).parent
+    tts_script = script_dir / "generate_tts.py"
+    
+    if not tts_script.exists():
+        return {"success": False, "message": f"TTS script not found: {tts_script}"}
+    
+    # Build command
+    cmd = [
+        sys.executable,  # Use same Python interpreter
+        str(tts_script),
+        "--resource-id", str(resource_id),
+        "--voice", voice,
+        "--url", base_url,
+        "--user", user,
+        "--key", api_key,
+        "--elevenlabs-key", elevenlabs_key,
+        "--json"
+    ]
+    
+    if force:
+        cmd.append("--force")
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=180  # 3 minute timeout for TTS generation
+        )
+        
+        # Parse JSON output
+        if result.stdout:
+            try:
+                return json.loads(result.stdout)
+            except json.JSONDecodeError:
+                pass
+        
+        if result.returncode == 0:
+            return {"success": True, "message": "TTS generated"}
+        else:
+            error_msg = result.stderr.strip() if result.stderr else "Unknown error"
+            return {"success": False, "message": error_msg}
+            
+    except subprocess.TimeoutExpired:
+        return {"success": False, "message": "TTS generation timed out"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="sync_transcription",
@@ -733,6 +799,12 @@ Examples:
   
   # List field IDs
   sync_transcription --list-fields
+  
+  # Sync and generate TTS audio
+  sync_transcription --resource-id 123 --formatted formatted.txt --generate-tts
+  
+  # Sync with specific TTS voice
+  sync_transcription --resource-id 123 --formatted formatted.txt --generate-tts --tts-voice adam
         """
     )
     
@@ -759,6 +831,16 @@ Examples:
     # Flags
     parser.add_argument("--force-literal", action="store_true",
                        help="Allow overwriting literal transcription")
+    
+    # TTS options
+    parser.add_argument("--generate-tts", action="store_true",
+                       help="Generate TTS audio after successful sync")
+    parser.add_argument("--tts-voice", default="rachel",
+                       help="Voice for TTS generation (default: rachel)")
+    parser.add_argument("--tts-force", action="store_true",
+                       help="Regenerate TTS even if audio exists")
+    parser.add_argument("--elevenlabs-key", default=os.getenv("ELEVENLABS_API_KEY"),
+                       help="ElevenLabs API key (or ELEVENLABS_API_KEY env var)")
     
     # Actions
     parser.add_argument("--status", action="store_true", help="Show current status")
@@ -850,6 +932,29 @@ Examples:
                       f"{skipped} skipped, {unchanged} unchanged")
             else:
                 print(f"✗ Sync failed: {', '.join(result.errors)}")
+        
+        # Generate TTS if requested and sync was successful
+        if result.success and args.generate_tts:
+            if not args.elevenlabs_key:
+                logger.error("--elevenlabs-key or ELEVENLABS_API_KEY required for TTS generation")
+                return 1
+            
+            logger.info("Starting TTS generation...")
+            tts_result = generate_tts_audio(
+                args.url, args.user, args.key, args.elevenlabs_key,
+                args.resource_id, args.tts_voice, args.tts_force
+            )
+            
+            if tts_result.get("success"):
+                if not args.json:
+                    if tts_result.get("skipped"):
+                        print(f"⊘ TTS: {tts_result.get('message', 'Audio already exists')}")
+                    else:
+                        print(f"✓ TTS: {tts_result.get('message', 'Audio generated')}")
+            else:
+                if not args.json:
+                    print(f"✗ TTS failed: {tts_result.get('message', 'Unknown error')}")
+                return 1
         
         return 0 if result.success else 1
         

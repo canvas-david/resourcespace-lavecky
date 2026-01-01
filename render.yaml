@@ -52,6 +52,8 @@ services:
         sync: false
       - key: RS_EMAIL_NOTIFY
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
     disk:
       name: filestore
       mountPath: /var/www/html/filestore

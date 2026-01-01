@@ -1,5 +1,63 @@
 # ResourceSpace Archival Transcription API Reference
 
+## Document AI OCR Processing
+
+### Setup
+
+1. **Create GCP service account:**
+   ```bash
+   gcloud iam service-accounts create documentai-ocr --display-name="Document AI OCR"
+   gcloud projects add-iam-policy-binding PROJECT_ID \
+     --member="serviceAccount:documentai-ocr@PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/documentai.apiUser"
+   gcloud iam service-accounts keys create documentai-key.json \
+     --iam-account=documentai-ocr@PROJECT_ID.iam.gserviceaccount.com
+   ```
+
+2. **Create OCR processor:**
+   ```bash
+   gcloud services enable documentai.googleapis.com
+   gcloud documentai processors create --display-name="ocr-processor" --type="OCR_PROCESSOR" --location="us"
+   ```
+
+3. **Configure environment:**
+   ```bash
+   cp env.example .env
+   # Edit .env with Document AI values
+   ```
+
+### Usage
+
+```bash
+# Process document and sync to ResourceSpace
+python process_ocr.py --file document.pdf --resource-id 123
+
+# With language hint (improves accuracy for non-English)
+python process_ocr.py --file letter.jpg --resource-id 456 --lang de
+
+# Output to file only (no sync)
+python process_ocr.py --file document.pdf --output ocr.txt
+
+# JSON output with metadata
+python process_ocr.py --file document.pdf --stdout --json
+```
+
+### Supported File Types
+
+| Extension | MIME Type |
+|-----------|-----------|
+| `.pdf` | application/pdf |
+| `.jpg`, `.jpeg` | image/jpeg |
+| `.png` | image/png |
+| `.tiff`, `.tif` | image/tiff |
+| `.gif` | image/gif |
+| `.bmp` | image/bmp |
+| `.webp` | image/webp |
+
+**Maximum file size:** 20MB (inline processing)
+
+---
+
 ## Field Configuration
 
 | ID | Field | Purpose | Mutability |
@@ -214,3 +272,81 @@ curl -s -X POST "http://localhost:8080/api/?${QUERY}&sign=${SIGN}"
 4. **Review status never downgrades** — `reviewed`/`approved` preserved even when content updates
 5. **All writes are idempotent** — safe to re-run; no-op if content unchanged
 6. **Version tracked** — `processing_version` updated on each successful sync
+
+---
+
+## TTS Audio Generation
+
+### Setup
+
+1. **Get ElevenLabs API key:**
+   - Sign up at https://elevenlabs.io
+   - Go to Settings > API Keys
+   - Copy your API key
+
+2. **Configure environment:**
+   ```bash
+   # Add to scripts/.env
+   ELEVENLABS_API_KEY=your_api_key_here
+   ```
+
+3. **Set up database fields:**
+   ```bash
+   mysql -h mysql-host -u resourcespace -p resourcespace < create_tts_fields.sql
+   ```
+
+### Usage
+
+```bash
+# Generate TTS for a resource
+python generate_tts.py --resource-id 123
+
+# Use specific voice
+python generate_tts.py --resource-id 123 --voice adam
+
+# Force regeneration
+python generate_tts.py --resource-id 123 --force
+
+# List available voices
+python generate_tts.py --list-voices
+
+# Combined sync + TTS generation
+python sync_transcription.py --resource-id 123 \
+    --formatted formatted.txt --generate-tts --tts-voice rachel
+```
+
+### TTS Fields
+
+| ID | Name | Purpose |
+|----|------|---------|
+| 101 | `tts_status` | `pending`, `done`, `failed` |
+| 102 | `tts_engine` | `elevenlabs` |
+| 103 | `tts_voice` | Voice name used |
+| 104 | `tts_generated_at` | Timestamp of generation |
+
+### Available Voices
+
+Common ElevenLabs voices:
+
+| Name | Description |
+|------|-------------|
+| rachel | Neutral, clear (default) |
+| adam | Deep, authoritative |
+| antoni | Warm, friendly |
+| charlotte | British, sophisticated |
+| daniel | British, deep |
+| emily | American, calm |
+| josh | Young, dynamic |
+| matilda | Warm, storytelling |
+| sam | Raspy, authentic |
+| sarah | Soft, news |
+
+Use `--list-voices` to see all available voices from your ElevenLabs account.
+
+### Plugin Usage
+
+The TTS Audio plugin provides a UI in the resource view page:
+- Audio player when TTS exists
+- Generate button when transcription is available
+- Voice selection dropdown
+- Regenerate option for existing audio

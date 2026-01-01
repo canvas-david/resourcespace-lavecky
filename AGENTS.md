@@ -39,7 +39,10 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `docker/backup/` | Backup cron job with R2 upload |
 | `docker/faces/` | InsightFace AI service |
 | `plugins/ocr_sidepanel/` | OCR display plugin |
+| `plugins/tts_audio/` | TTS audio generation plugin |
+| `scripts/process_ocr.py` | Google Document AI OCR processor |
 | `scripts/sync_transcription.py` | Archival transcription sync CLI |
+| `scripts/generate_tts.py` | ElevenLabs TTS audio generator |
 
 ## Critical Rules
 
@@ -94,18 +97,60 @@ docker compose up -d
 5. Create backup user in MySQL for backups
 6. Configure AI Faces plugin URL: `http://faces:8001`
 
+### Process OCR with Document AI
+```bash
+cd scripts
+# Process and sync to ResourceSpace
+python process_ocr.py --file document.pdf --resource-id 123 --lang de
+
+# Output to file only
+python process_ocr.py --file document.pdf --output ocr.txt
+```
+
 ### Sync Transcriptions
 ```bash
 cd scripts
 python sync_transcription.py --resource-id 123 \
-  --ocr ocr.txt --literal literal.txt --formatted formatted.txt \
-  --lang de --version v1.2.0
+ --ocr ocr.txt --literal literal.txt --formatted formatted.txt \
+ --lang de --version v1.2.0
 ```
 
 ### Check Transcription Status
 ```bash
 python scripts/sync_transcription.py --resource-id 123 --status
 ```
+
+### Generate TTS Audio
+```bash
+cd scripts
+# Generate TTS from formatted transcription
+python generate_tts.py --resource-id 123 --voice rachel
+
+# Combined sync + TTS generation
+python sync_transcription.py --resource-id 123 \
+ --formatted formatted.txt --generate-tts --tts-voice adam
+
+# List available voices
+python generate_tts.py --list-voices
+```
+
+### Configure OpenAI GPT Automated Tagging
+1. Set `OPENAI_API_KEY` environment variable (or configure via UI)
+2. Login as admin: **Admin** > **System** > **Plugins**
+3. Activate **"OpenAI API GPT integration"** under Asset Processing
+4. Click **Options** to verify API key and select model (default: gpt-4o)
+5. Configure metadata fields:
+   - **Admin** > **System** > **Manage metadata fields**
+   - Select target field (e.g., Keywords, Description)
+   - Expand **Advanced** section
+   - Set **GPT Prompt**: e.g., "List up to 10 keywords for this image"
+   - Set **GPT Input Field**: `Image: Preview image` or another field
+6. Process existing resources (optional):
+   ```bash
+   docker exec -it resourcespace bash
+   cd /var/www/html/plugins/openai_gpt/pages
+   php process_existing.php --field=FIELD_ID --limit=100
+   ```
 
 ## Environment Variables
 
@@ -125,6 +170,18 @@ python scripts/sync_transcription.py --resource-id 123 --status
 
 ### Transcription Sync
 - `RS_API_KEY` - Required for sync_transcription.py
+
+### Document AI OCR
+- `GOOGLE_APPLICATION_CREDENTIALS` - Path to service account JSON key
+- `DOCUMENTAI_PROJECT_ID` - GCP project ID
+- `DOCUMENTAI_LOCATION` - Processor region (us or eu)
+- `DOCUMENTAI_PROCESSOR_ID` - OCR processor ID
+
+### ElevenLabs TTS
+- `ELEVENLABS_API_KEY` - ElevenLabs API key for TTS generation
+
+### OpenAI GPT (Automated Metadata Tagging)
+- `OPENAI_API_KEY` - OpenAI API key for GPT metadata generation
 
 ## Testing Changes
 
