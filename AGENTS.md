@@ -238,7 +238,7 @@ python generate_tts.py --list-voices
 - `DOCUMENTAI_PROCESSOR_ID` - OCR processor ID
 
 ### ElevenLabs TTS
-- `ELEVENLABS_API_KEY` - ElevenLabs API key for TTS generation
+- `ELEVENLABS_API_KEY` - ElevenLabs API key for TTS generation (set in Render dashboard)
 
 ### OpenAI GPT (Automated Metadata Tagging)
 - `OPENAI_API_KEY` - OpenAI API key for GPT metadata generation

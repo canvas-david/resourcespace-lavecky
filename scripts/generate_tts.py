@@ -238,46 +238,72 @@ class ResourceSpaceClient:
         description: str = "Text-to-speech audio from transcription"
     ) -> bool:
         """
-        Upload a file to ResourceSpace.
+        Upload a file to ResourceSpace as an alternative file.
         
-        For alternative files, we use the add_alternative_file + upload_file approach.
+        Uses multipart form upload with query string authentication.
         """
-        if alternative:
-            # First create the alternative file record
-            result = self.call("add_alternative_file", {
-                "resource": resource_id,
-                "name": name,
-                "description": description,
-                "file_name": file_path.name,
-                "file_extension": file_path.suffix.lstrip("."),
-                "file_size": file_path.stat().st_size,
-                "alt_type": ""
-            })
-            
-            if not result:
-                raise UploadError(f"Failed to create alternative file record: {result}")
-            
-            alt_ref = result
-            logger.info(f"Created alternative file record: {alt_ref}")
-            
-            # Now upload the actual file content
-            # Read file and base64 encode it
-            with open(file_path, "rb") as f:
-                file_data = base64.b64encode(f.read()).decode("ascii")
-            
-            # Upload using upload_file_by_base64
-            upload_result = self.call("upload_file_by_base64", {
-                "resource": resource_id,
-                "data": file_data,
-                "alternative": alt_ref
-            })
-            
-            if not upload_result:
-                raise UploadError(f"Failed to upload file content: {upload_result}")
-            
-            return True
-        else:
+        import uuid
+        
+        if not alternative:
             raise NotImplementedError("Non-alternative file upload not implemented")
+        
+        # First create the alternative file record
+        result = self.call("add_alternative_file", {
+            "resource": resource_id,
+            "name": name,
+            "description": description,
+            "file_name": file_path.name,
+            "file_extension": file_path.suffix.lstrip("."),
+            "file_size": file_path.stat().st_size,
+            "alt_type": ""
+        })
+        
+        if not result:
+            raise UploadError(f"Failed to create alternative file record: {result}")
+        
+        alt_ref = result
+        logger.info(f"Created alternative file record: {alt_ref}")
+        
+        # Build signed query string for the upload API
+        params = {
+            "user": self.user,
+            "function": "upload_file",
+            "ref": str(resource_id),
+            "no_exif": "true",
+            "alternative": str(alt_ref)
+        }
+        query = urllib.parse.urlencode(params)
+        sign = self._sign(query)
+        full_query = f"{query}&sign={sign}"
+        
+        # Create multipart form data with the file
+        boundary = str(uuid.uuid4())
+        
+        with open(file_path, "rb") as f:
+            file_data = f.read()
+        
+        body = (
+            f'--{boundary}\r\n'
+            f'Content-Disposition: form-data; name="userfile"; filename="{file_path.name}"\r\n'
+            f'Content-Type: audio/mpeg\r\n\r\n'
+        ).encode('utf-8') + file_data + f'\r\n--{boundary}--\r\n'.encode('utf-8')
+        
+        # Make request with query params in URL
+        url = f"{self.base_url}/api/?{full_query}"
+        req = urllib.request.Request(url, data=body, method="POST")
+        req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
+        
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                result = resp.read().decode("utf-8")
+                if result.strip('"') == str(resource_id):
+                    return True
+                raise UploadError(f"Unexpected upload response: {result}")
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            raise UploadError(f"Upload failed HTTP {e.code}: {body}")
+        except urllib.error.URLError as e:
+            raise UploadError(f"Upload connection failed: {e.reason}")
 
 
 # -----------------------------------------------------------------------------
