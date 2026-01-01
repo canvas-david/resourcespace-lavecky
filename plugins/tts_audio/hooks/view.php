@@ -12,7 +12,7 @@ include_once dirname(__FILE__, 2) . '/include/tts_audio_functions.php';
  */
 function HookTts_audioViewCustompanels()
 {
-    global $ref, $lang, $baseurl, $baseurl_short;
+    global $ref, $lang, $baseurl, $baseurl_short, $usersession, $CSRF_token_identifier;
     
     // Get TTS audio if exists
     $audio_url = tts_audio_get_url($ref);
@@ -30,6 +30,9 @@ function HookTts_audioViewCustompanels()
     $default_voice = 'rachel';
     get_config_option([], 'tts_audio_default_voice', $default_voice, 'rachel');
     $voice_options = tts_audio_get_voice_options();
+    
+    // Generate CSRF token for AJAX requests
+    $csrf_token = generateCSRFToken($usersession, 'tts_audio_generate');
     
     ?>
     <div class="RecordBox">
@@ -96,7 +99,7 @@ function HookTts_audioViewCustompanels()
         
         var xhr = new XMLHttpRequest();
         var url = '<?php echo $baseurl_short; ?>plugins/tts_audio/pages/generate.php';
-        var params = 'ref=' + resourceId + '&voice=' + encodeURIComponent(voice) + '&force=' + (force ? '1' : '0') + '&ajax=true';
+        var params = 'ref=' + resourceId + '&voice=' + encodeURIComponent(voice) + '&force=' + (force ? '1' : '0') + '&ajax=true&<?php echo $CSRF_token_identifier; ?>=<?php echo $csrf_token; ?>';
         
         xhr.open('POST', url, true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
