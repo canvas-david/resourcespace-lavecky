@@ -160,8 +160,22 @@ if ($http_code !== 200 || empty($audio_data)) {
 }
 
 // Save audio to temp file
-$temp_file = tempnam(sys_get_temp_dir(), 'tts_') . '.mp3';
-file_put_contents($temp_file, $audio_data);
+$temp_base = tempnam(sys_get_temp_dir(), 'tts_');
+$temp_file = $temp_base . '.mp3';
+// Remove the original temp file created by tempnam
+if (file_exists($temp_base)) {
+    unlink($temp_base);
+}
+$bytes_written = file_put_contents($temp_file, $audio_data);
+
+if ($bytes_written === false || $bytes_written === 0) {
+    if ($ajax) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Failed to write audio to temp file']);
+        exit;
+    }
+    exit('Failed to write audio to temp file');
+}
 
 // Add as alternative file using ResourceSpace's native function
 $description = "Text-to-speech audio (voice: $voice, model: $model)";

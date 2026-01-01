@@ -117,20 +117,9 @@ function tts_audio_get_url($ref)
     $alt_ref = $alt['ref'];
     $ext = $alt['file_extension'] ?? 'mp3';
     
-    // Use get_resource_path to get the proper file URL with scramble key
-    // This handles the storage path correctly
-    $file_path = get_resource_path($ref, true, "", false, $ext, true, 1, false, "", $alt_ref);
-    
-    if (!empty($file_path) && file_exists($file_path)) {
-        // Convert file path to URL
-        $url_path = get_resource_path($ref, false, "", false, $ext, true, 1, false, "", $alt_ref);
-        if (!empty($url_path)) {
-            return $url_path;
-        }
-    }
-    
-    // Fallback to download.php with proper parameters
-    return $baseurl . '/pages/download.php?ref=' . $ref . '&alternative=' . $alt_ref . '&ext=' . $ext . '&k=&direct=1';
+    // Use the same URL format as ResourceSpace's view_alternative_files.php
+    // noattach=true makes it stream inline instead of download
+    return $baseurl . '/pages/download.php?ref=' . (int)$ref . '&ext=' . urlencode($ext) . '&alternative=' . (int)$alt_ref . '&noattach=true&k=';
 }
 
 /**
