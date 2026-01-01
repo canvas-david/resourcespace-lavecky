@@ -32,4 +32,6 @@ ENV FACES_DB_USER=resourcespace
 ENV FACES_PORT=8001
 
 # Note: FACES_DB_PASS must be set at runtime via render.yaml
-CMD ["sh", "-c", "python faces_service.py --port=$FACES_PORT"]
+# Bypass faces_service.py __main__ block which hardcodes host=127.0.0.1
+# Call uvicorn directly with 0.0.0.0 for Render's health check to detect the port
+CMD ["sh", "-c", "uvicorn faces_service:app --host 0.0.0.0 --port $FACES_PORT"]
