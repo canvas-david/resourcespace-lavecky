@@ -321,28 +321,38 @@ class ClaudeAnnotator:
 class ResourceSpaceClient:
     """Simple client for ResourceSpace API."""
     
-    def __init__(self, base_url: str, api_key: str):
+    def __init__(self, base_url: str, api_key: str, user: str = "admin"):
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key
+        self.user = user
     
     def _sign(self, query: str) -> str:
         """Generate API signature."""
         return hashlib.sha256((self.api_key + query).encode()).hexdigest()
     
     def _call(self, function: str, params: Dict = None) -> any:
-        """Call ResourceSpace API."""
+        """Call ResourceSpace API using POST."""
         params = params or {}
-        query = f"function={function}"
-        for k, v in sorted(params.items()):
-            query += f"&{k}={v}"
-        
+        all_params = {"user": self.user, "function": function, **params}
+        query = urllib.parse.urlencode(all_params)
         sign = self._sign(query)
-        url = f"{self.base_url}/api/?{query}&sign={sign}"
         
-        req = urllib.request.Request(url)
+        # Use POST to handle large payloads
+        url = f"{self.base_url}/api/"
+        post_data = urllib.parse.urlencode({
+            "query": f"{query}&sign={sign}",
+            "sign": sign,
+            "user": self.user
+        }).encode("utf-8")
+        
+        req = urllib.request.Request(url, data=post_data, method="POST")
         try:
             with urllib.request.urlopen(req, timeout=60) as resp:
                 data = resp.read().decode("utf-8")
+                if data == "true":
+                    return True
+                if data == "false":
+                    return False
                 if data.startswith('"') and data.endswith('"'):
                     return json.loads(data)
                 try:
@@ -354,11 +364,9 @@ class ResourceSpaceClient:
     
     def get_field(self, resource_id: int, field_id: int) -> str:
         """Get field value for a resource."""
-        result = self._call("get_resource_field_data", {"resource": resource_id})
-        if isinstance(result, list):
-            for f in result:
-                if f.get("resource_type_field") == str(field_id):
-                    return f.get("value", "")
+        result = self._call("get_data_by_field", {"param1": resource_id, "param2": field_id})
+        if isinstance(result, str):
+            return result
         return ""
     
     def update_field(self, resource_id: int, field_id: int, value: str) -> bool:
@@ -366,7 +374,7 @@ class ResourceSpaceClient:
         result = self._call("update_field", {
             "resource": resource_id,
             "field": field_id,
-            "value": urllib.parse.quote(value, safe='')
+            "value": value  # Don't URL-encode; _call handles encoding
         })
         return result is True or result == "true"
 
