@@ -147,7 +147,7 @@ For high-confidence OCR, use `ocr_verify.py` to run 4 models and build consensus
 | Document AI | Dedicated OCR | Best handwriting accuracy |
 | Vision API | Dedicated OCR | Fast, good for typewritten |
 | Claude Vision | LLM | Semantic understanding |
-| GPT-5.2 Vision | LLM | Semantic understanding |
+| GPT-4o Vision | LLM | Semantic understanding |
 
 **Consensus Logic:**
 - 4/4 agree: Very high confidence (~99%+ accuracy)
@@ -177,10 +177,11 @@ Fields are organized into tabs for different user workflows. Tab names are prefi
 | Tab Name | Purpose | Field IDs |
 |----------|---------|-----------|
 | 1. Default | Standard asset metadata | (built-in) |
-| 2. Transcription | Readable content (full-width text) | 89, 96, 101 |
-| 3. Review | Editorial workflow | 94, 95, 98, 99 |
-| 4. Technical | Processing details + source language | 90, 91, 92, 93, 97, 100, 102 |
-| 5. Archival | Raw source data | 88 |
+| 2. Reading | End-user content (formatted + translation) | 96, 101 |
+| 3. Literal | Exact transcription for researchers | 89 |
+| 4. Review | Editorial workflow | 94, 95, 98, 99 |
+| 5. Technical | Processing details + source language | 90, 91, 92, 93, 97, 100, 102 |
+| 6. Archival | Raw OCR (immutable) | 88 |
 
 **Note:** Tabs only display if they contain fields with values. Empty tabs are hidden.
 

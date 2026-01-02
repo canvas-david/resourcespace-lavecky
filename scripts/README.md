@@ -88,6 +88,6 @@ See `docs/env.example` for all required variables:
 - `GOOGLE_API_KEY` - Vision API
 - `GOOGLE_APPLICATION_CREDENTIALS` - Document AI
 - `ANTHROPIC_API_KEY` - Claude
-- `OPENAI_API_KEY` - GPT-5.2
+- `OPENAI_API_KEY` - GPT-4o
 - `RS_API_KEY` - ResourceSpace API
 - `ELEVENLABS_API_KEY` - TTS

@@ -8,7 +8,7 @@ high-confidence transcriptions:
 1. Document AI (dedicated OCR - best for handwriting)
 2. Vision API (dedicated OCR - fast, good for typewritten)
 3. Claude Vision (LLM - semantic understanding)
-4. GPT-5.2 Vision (LLM - semantic understanding)
+4. GPT-4o Vision (LLM - semantic understanding)
 
 Consensus Logic:
 - 4/4 agree: Very high confidence
@@ -800,7 +800,7 @@ Examples:
             else:
                 logger.warning("ANTHROPIC_API_KEY not set - Claude disabled")
         
-        # GPT-5.2
+        # GPT-4o
         if "gpt" in enabled_engines:
             api_key = os.getenv("OPENAI_API_KEY")
             if api_key:

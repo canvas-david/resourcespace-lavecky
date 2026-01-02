@@ -78,5 +78,5 @@ python sync_transcription.py \
 
 - **Handwritten content**: These are personal handwritten letters, requiring Document AI for primary OCR
 - **Language**: English (Australian English)
-- **Multi-model verification**: Uses Document AI + Vision API + Claude + GPT-5.2 for consensus
+- **Multi-model verification**: Uses Document AI + Vision API + Claude + GPT-4o for consensus
 - **Archive**: Previous OCR in `archive/ocr_v1/` preserved for comparison

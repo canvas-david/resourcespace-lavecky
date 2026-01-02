@@ -201,7 +201,7 @@ For high-confidence OCR, use `ocr_verify.py` to run 4 models and build consensus
 | Document AI | Dedicated OCR | Primary OCR, best for handwriting |
 | Vision API | Dedicated OCR | Secondary OCR, fast for typewritten |
 | Claude Vision | LLM | Semantic verification |
-| GPT-5.2 Vision | LLM | Semantic verification |
+| GPT-4o Vision | LLM | Semantic verification |
 
 ### Consensus Logic
 
