@@ -437,14 +437,15 @@ function tts_audio_clean_text($text)
     $text = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $text);
     
     // Normalize quotes to standard ASCII
-    $text = str_replace(['"', '"', '„', '‟'], '"', $text);
-    $text = str_replace([''', ''', '‚', '‛'], "'", $text);
+    // Using hex codes to avoid encoding issues: " " „ ‟ ' ' ‚ ‛
+    $text = str_replace(["\xe2\x80\x9c", "\xe2\x80\x9d", "\xe2\x80\x9e", "\xe2\x80\x9f"], '"', $text);
+    $text = str_replace(["\xe2\x80\x98", "\xe2\x80\x99", "\xe2\x80\x9a", "\xe2\x80\x9b"], "'", $text);
     
-    // Normalize dashes
-    $text = str_replace(['—', '–', '‒', '―'], '-', $text);
+    // Normalize dashes: — – ‒ ―
+    $text = str_replace(["\xe2\x80\x94", "\xe2\x80\x93", "\xe2\x80\x92", "\xe2\x80\x95"], '-', $text);
     
-    // Normalize ellipsis
-    $text = str_replace('…', '...', $text);
+    // Normalize ellipsis: …
+    $text = str_replace("\xe2\x80\xa6", '...', $text);
     
     // Remove control characters except newlines and tabs
     $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $text);
