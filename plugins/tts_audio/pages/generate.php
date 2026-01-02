@@ -99,13 +99,15 @@ $model = 'eleven_v3';  // v3: emotional, expressive, 70+ languages
 
 // Voice settings for v3 model:
 // - stability: 0.0 (Creative), 0.5 (Natural), 1.0 (Robust) - only these values allowed
-// - similarity_boost: higher = closer to original voice
-// - use_speaker_boost: enhances similarity for cloned voices
+// - similarity_boost: 0.0-1.0, higher = closer to original voice
+// - use_speaker_boost: NOT supported on v3 (only works on v2)
+// 
+// For emotion tags: Use Creative (0.0) for maximum tag responsiveness
+// For cloned voices: Use high similarity_boost (0.9-1.0) for accuracy
 $is_cloned_voice = ($voice === 'omi');
 $voice_settings = [
-    'stability' => 0.5,  // v3 only accepts 0.0, 0.5, or 1.0
-    'similarity_boost' => $is_cloned_voice ? 0.85 : 0.75,
-    'use_speaker_boost' => $is_cloned_voice
+    'stability' => 0.0,  // Creative: best for emotion tags like [elderly, warm]
+    'similarity_boost' => $is_cloned_voice ? 0.95 : 0.75
 ];
 
 // Chunk the text if needed (v3 has 5000 char limit)
