@@ -97,13 +97,13 @@ $voice_ids = [
 $voice_id = $voice_ids[$voice] ?? $voice_ids['omi'];
 $model = 'eleven_v3';  // v3: emotional, expressive, 70+ languages
 
-// Voice settings optimized for cloned voice accuracy:
-// - Higher similarity_boost (0.85) = closer to original voice
-// - Higher stability (0.65) = more consistent while allowing expression
+// Voice settings for v3 model:
+// - stability: 0.0 (Creative), 0.5 (Natural), 1.0 (Robust) - only these values allowed
+// - similarity_boost: higher = closer to original voice
 // - use_speaker_boost: enhances similarity for cloned voices
 $is_cloned_voice = ($voice === 'omi');
 $voice_settings = [
-    'stability' => $is_cloned_voice ? 0.65 : 0.50,
+    'stability' => 0.5,  // v3 only accepts 0.0, 0.5, or 1.0
     'similarity_boost' => $is_cloned_voice ? 0.85 : 0.75,
     'use_speaker_boost' => $is_cloned_voice
 ];

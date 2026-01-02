@@ -113,7 +113,10 @@ def upload_file(base_url: str, api_key: str, user: str, resource_id: int, filepa
             except json.JSONDecodeError:
                 return {'status': 'success', 'raw': response_data}
     except urllib.error.HTTPError as e:
-        error_body = e.read().decode()
+        try:
+            error_body = e.read().decode()
+        except Exception:
+            error_body = f"HTTP {e.code}"
         return {'status': 'fail', 'code': e.code, 'error': error_body}
     except Exception as e:
         return {'status': 'fail', 'error': str(e)}
