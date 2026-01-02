@@ -143,6 +143,7 @@ function tts_audio_update_status($ref, $status)
 function tts_audio_get_voice_options()
 {
     return [
+        'omi' => '★ Omi (German)',
         'rachel' => 'Rachel (Neutral, Clear)',
         'adam' => 'Adam (Deep, Authoritative)',
         'antoni' => 'Antoni (Warm, Friendly)',

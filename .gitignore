@@ -34,3 +34,5 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+scripts/gcp-service-account.json
+scripts/.env

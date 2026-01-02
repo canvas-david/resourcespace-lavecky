@@ -1,0 +1,80 @@
+{
+  "source_file": "../Omi's letters/images/03_vienna_dobling_leaving_hitler_p01.png",
+  "models_used": [
+    "vision",
+    "docai",
+    "gpt"
+  ],
+  "overall_confidence": 0.9774,
+  "total_words": 177,
+  "high_confidence": 173,
+  "medium_confidence": 0,
+  "low_confidence": 4,
+  "disagreement_count": 4,
+  "engine_status": {
+    "vision": {
+      "success": true,
+      "chars": 897,
+      "confidence": 0.8135,
+      "error": null
+    },
+    "docai": {
+      "success": true,
+      "chars": 898,
+      "confidence": 0.0,
+      "error": null
+    },
+    "gpt": {
+      "success": false,
+      "chars": 0,
+      "confidence": 0.0,
+      "error": "<urlopen error [Errno 32] Broken pipe>"
+    }
+  },
+  "disagreements": [
+    {
+      "position": 42,
+      "readings": {
+        "vision": "thatt",
+        "docai": "that"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 65,
+      "readings": {
+        "vision": "i",
+        "docai": "to"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 79,
+      "readings": {
+        "vision": "деди",
+        "docai": "дедит"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 88,
+      "readings": {
+        "vision": "harted",
+        "docai": "harter"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    }
+  ]
+}

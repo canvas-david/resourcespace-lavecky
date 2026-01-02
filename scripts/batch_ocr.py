@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 """
-Yad Vashem Document Batch Processor
+Batch OCR and Translation Pipeline
 
-Orchestrates OCR and translation pipeline for Yad Vashem documents.
+Orchestrates OCR and translation for multi-page documents with mixed languages.
 
 Usage:
     # Process all images in a directory
-    process_yadvashem_batch.py --input-dir downloads/yadvashem_3555547 \
+    batch_ocr.py --input-dir downloads/document_123 \
         --polish-pages 1-20 --hebrew-pages 21-34
 
     # Dry run (show what would be processed)
-    process_yadvashem_batch.py --input-dir downloads/yadvashem_3555547 \
+    batch_ocr.py --input-dir downloads/document_123 \
         --polish-pages 1-20 --hebrew-pages 21-34 --dry-run
 
     # Skip OCR (if already done), only translate
-    process_yadvashem_batch.py --input-dir downloads/yadvashem_3555547 \
+    batch_ocr.py --input-dir downloads/document_123 \
         --polish-pages 1-20 --hebrew-pages 21-34 --translate-only
 
 Environment:
-    GOOGLE_API_KEY                   Google Cloud API key (for Vision OCR)
+    GOOGLE_API_KEY                   Google Cloud API key (Vision API)
+    GOOGLE_APPLICATION_CREDENTIALS   Service account JSON (Document AI)
+    DOCUMENTAI_PROJECT_ID            GCP project ID
+    DOCUMENTAI_LOCATION              Processor location (us, eu)
+    DOCUMENTAI_PROCESSOR_ID          OCR processor ID
     ANTHROPIC_API_KEY                Anthropic API key (for translation)
 """
 
@@ -74,6 +78,7 @@ class BatchConfig:
     hebrew_pages: Optional[PageRange] = None
     target_language: str = "en"
     translation_model: str = "opus"
+    ocr_engine: str = "auto"  # auto, vision, or documentai
     skip_ocr: bool = False
     skip_translation: bool = False
     dry_run: bool = False
@@ -103,6 +108,7 @@ class BatchConfig:
             hebrew_pages=hebrew_pages,
             target_language=args.target_language,
             translation_model=args.translation_model,
+            ocr_engine=args.ocr_engine,
             skip_ocr=args.translate_only,
             skip_translation=args.ocr_only,
             dry_run=args.dry_run
@@ -190,7 +196,7 @@ class BatchProcessor:
     def __init__(self, config: BatchConfig):
         self.config = config
         self.script_dir = Path(__file__).parent
-        self.ocr_script = self.script_dir / "ocr_google_vision.py"  # Google Vision OCR
+        self.ocr_script = self.script_dir / "ocr.py"  # Unified OCR with auto-detection
         self.translate_script = self.script_dir / "translate_ocr.py"
         
         # Verify scripts exist
@@ -348,7 +354,10 @@ class BatchProcessor:
         language: str
     ) -> Tuple[bool, int, Optional[str]]:
         """
-        Run OCR on an image using Google Cloud Vision API.
+        Run OCR on an image using unified OCR script.
+        
+        Auto-detects handwritten vs typewritten content and routes to
+        the optimal engine (Document AI for handwriting, Vision API otherwise).
         
         Returns (success, char_count, error_message).
         """
@@ -356,6 +365,7 @@ class BatchProcessor:
             sys.executable,
             str(self.ocr_script),
             "--file", str(image_path),
+            "--engine", self.config.ocr_engine,
             "--lang", language,
             "--output", str(output_path)
         ]
@@ -442,38 +452,54 @@ class BatchProcessor:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        prog="process_yadvashem_batch",
-        description="Batch process Yad Vashem documents through OCR and translation",
+        prog="batch_ocr",
+        description="Batch process documents through OCR and translation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Environment variables:
-  GOOGLE_API_KEY                   Google Cloud API key (Vision OCR)
+  GOOGLE_API_KEY                   Vision API key (fast, typewritten)
+  GOOGLE_APPLICATION_CREDENTIALS   Document AI service account (handwriting)
+  DOCUMENTAI_PROJECT_ID            GCP project ID
+  DOCUMENTAI_LOCATION              Processor location (us, eu)
+  DOCUMENTAI_PROCESSOR_ID          OCR processor ID
   ANTHROPIC_API_KEY                Anthropic API key (Claude translation)
 
 Examples:
-  # Process document 3555547 (Polish pages 1-20, Hebrew pages 21-34)
-  process_yadvashem_batch.py \\
-      --input-dir downloads/yadvashem_3555547 \\
+  # Auto-detect handwriting and route to best OCR engine
+  batch_ocr.py \\
+      --input-dir downloads/document_123 \\
       --polish-pages 1-20 \\
       --hebrew-pages 21-34
 
+  # Force Document AI for known handwritten letters
+  batch_ocr.py \\
+      --input-dir downloads/handwritten_letters \\
+      --polish-pages 1-10 \\
+      --ocr-engine documentai
+
+  # Force Vision API for typewritten documents
+  batch_ocr.py \\
+      --input-dir downloads/typed_docs \\
+      --polish-pages 1-20 \\
+      --ocr-engine vision
+
   # Dry run to see what would be processed
-  process_yadvashem_batch.py \\
-      --input-dir downloads/yadvashem_3555547 \\
+  batch_ocr.py \\
+      --input-dir downloads/document_123 \\
       --polish-pages 1-20 \\
       --hebrew-pages 21-34 \\
       --dry-run
 
   # Skip OCR (if already done), only translate
-  process_yadvashem_batch.py \\
-      --input-dir downloads/yadvashem_3555547 \\
+  batch_ocr.py \\
+      --input-dir downloads/document_123 \\
       --polish-pages 1-20 \\
       --hebrew-pages 21-34 \\
       --translate-only
 
   # OCR only, skip translation
-  process_yadvashem_batch.py \\
-      --input-dir downloads/yadvashem_3555547 \\
+  batch_ocr.py \\
+      --input-dir downloads/document_123 \\
       --polish-pages 1-20 \\
       --hebrew-pages 21-34 \\
       --ocr-only
@@ -491,6 +517,11 @@ Examples:
                        help="Polish page range (e.g., 1-20)")
     parser.add_argument("--hebrew-pages", "-he",
                        help="Hebrew page range (e.g., 21-34)")
+    
+    # OCR options
+    parser.add_argument("--ocr-engine", default="auto",
+                       choices=["auto", "vision", "documentai"],
+                       help="OCR engine: auto (detect handwriting), vision, or documentai (default: auto)")
     
     # Translation options
     parser.add_argument("--target-language", "-t", default="en",
@@ -529,6 +560,7 @@ Examples:
         processor = BatchProcessor(config)
         
         logger.info(f"Processing: {config.input_dir}")
+        logger.info(f"  OCR engine: {config.ocr_engine}")
         if config.polish_pages:
             logger.info(f"  Polish pages: {config.polish_pages.start}-{config.polish_pages.end}")
         if config.hebrew_pages:

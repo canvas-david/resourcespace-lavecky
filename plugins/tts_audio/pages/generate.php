@@ -93,6 +93,7 @@ if (empty($elevenlabs_key)) {
 
 // Voice ID mapping
 $voice_ids = [
+    'omi' => 'RLUByKTYYITeAvbZnWex',      // Custom cloned voice (German)
     'rachel' => '21m00Tcm4TlvDq8ikWAM',
     'adam' => 'pNInz6obpgDQGcFmaJgB',
     'antoni' => 'ErXwobaYiN019PkySvjV',

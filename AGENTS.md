@@ -45,20 +45,24 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `plugins/tts_audio/pages/generate.php` | TTS generation endpoint (calls ElevenLabs API) |
 | `plugins/tts_audio/hooks/view.php` | Audio player panel on resource view |
 | `scripts/db.sh` | Render MySQL helper (SSH database access) |
-| `scripts/create_ocr_fields.sql` | OCR/transcription field schema (fields 88-102) |
-| `scripts/create_tts_fields.sql` | TTS metadata field schema (fields 103-106) |
-| `scripts/setup_ocr_fields.sh` | OCR field setup automation helper |
-| `scripts/process_ocr.py` | Google Document AI OCR processor |
-| `scripts/ocr_google_vision.py` | Google Cloud Vision OCR (simpler, uses API key) |
-| `scripts/ocr_claude.py` | Claude Vision OCR (⚠️ LLM - not for archival) |
+| `scripts/db/create_ocr_fields.sql` | OCR/transcription field schema (fields 88-102) |
+| `scripts/db/create_tts_fields.sql` | TTS metadata field schema (fields 103-106) |
+| `scripts/db/setup_ocr_fields.sh` | OCR field setup automation helper |
+| `scripts/ocr.py` | **Unified OCR with auto-detection** (handwriting → Document AI) |
+| `scripts/legacy/process_ocr.py` | Google Document AI OCR processor (legacy) |
+| `scripts/legacy/ocr_google_vision.py` | Google Cloud Vision OCR (legacy) |
+| `scripts/legacy/ocr_claude.py` | Claude Vision OCR (⚠️ LLM - not for archival) |
 | `scripts/translate_ocr.py` | Claude Opus 4.5 translation (Anthropic API) |
-| `scripts/process_yadvashem_batch.py` | Batch OCR + translation pipeline |
-| `scripts/upload_testimony.py` | Upload processed documents to ResourceSpace |
+| `scripts/transcribe_ocr.py` | **OCR-to-literal transcription** (archival correction) |
+| `scripts/ocr_verify.py` | **4-model OCR verification** (consensus voting) |
+| `scripts/docs/OCR_HANDLING_RULES.md` | Archival rules for OCR text processing |
+| `scripts/batch_ocr.py` | Batch OCR + translation pipeline (auto-detects handwriting) |
+| `scripts/upload/upload_testimony.py` | Upload processed documents to ResourceSpace |
 | `scripts/sync_transcription.py` | Archival transcription sync CLI |
 | `scripts/generate_tts.py` | ElevenLabs TTS audio generator |
-| `scripts/detect_faces.php` | PHP face detection helper |
-| `scripts/test_faces.sh` | Face AI service testing |
-| `scripts/ARCHIVAL_API_REFERENCE.md` | Detailed API reference for transcription sync |
+| `scripts/faces/detect_faces.php` | PHP face detection helper |
+| `scripts/faces/test_faces.sh` | Face AI service testing |
+| `scripts/docs/ARCHIVAL_API_REFERENCE.md` | Detailed API reference for transcription sync |
 | `.github/workflows/build-base.yml` | GitHub Actions to build/push base image |
 | `downloads/` | Working directory for batch document processing |
 
@@ -95,7 +99,77 @@ The sync_transcription.py enforces archival integrity:
 | 101 | English Translation | Iterable, `--force-translation` to update |
 | 94, 98 | Review Status | Never downgrades from `reviewed`/`approved` |
 
-**Full field reference:** See `scripts/ARCHIVAL_API_REFERENCE.md` for complete field IDs (88-102) and API documentation.
+**Full field reference:** See `scripts/docs/ARCHIVAL_API_REFERENCE.md` for complete field IDs (88-102) and API documentation.
+
+### OCR Processing Workflow
+
+**CRITICAL: Follow proper archival workflow for OCR text.**
+
+```
+Raw OCR (88) → Literal (89) → Formatted (96)
+     ↑              ↑              ↑
+  Machine      Human-verified   Reader-friendly
+  IMMUTABLE    Write-once       Iterable
+```
+
+| Step | Field | Process | Rules |
+|------|-------|---------|-------|
+| 1. OCR | 88 | `ocr.py` outputs raw text | Never modify after save |
+| 2. Literal | 89 | `transcribe_ocr.py` corrects OCR | Correct machine errors ONLY |
+| 3. Format | 96 | Add headers, structure | Based on Field 89, not Field 88 |
+
+**Using transcribe_ocr.py:**
+```bash
+# With image verification (best accuracy)
+ANTHROPIC_API_KEY="key" python scripts/transcribe_ocr.py \
+    --ocr raw_ocr.txt --scan original.jpg --output literal.txt
+
+# Without image (OCR-only, less accurate)
+ANTHROPIC_API_KEY="key" python scripts/transcribe_ocr.py \
+    --ocr raw_ocr.txt --output literal.txt
+```
+
+**Rules for Literal Transcription (Field 89):**
+- ✓ Correct OCR machine errors (misread characters)
+- ✓ Mark unclear text: `[unclear]`, `[illegible]`, `[word?]`
+- ✗ Do NOT "fix" author's spelling, grammar, or style
+- ✗ Do NOT modernize language
+- ✗ Do NOT add interpretations
+
+**Full rules:** See `scripts/docs/OCR_HANDLING_RULES.md`
+
+### Multi-Model OCR Verification
+
+For high-confidence OCR, use `ocr_verify.py` to run 4 models and build consensus:
+
+| Model | Type | Strength |
+|-------|------|----------|
+| Document AI | Dedicated OCR | Best handwriting accuracy |
+| Vision API | Dedicated OCR | Fast, good for typewritten |
+| Claude Vision | LLM | Semantic understanding |
+| GPT-5.2 Vision | LLM | Semantic understanding |
+
+**Consensus Logic:**
+- 4/4 agree: Very high confidence (~99%+ accuracy)
+- 3/4 agree: High confidence (~95%+ accuracy)
+- 2/4 agree: Medium confidence - flag for review
+- All differ: Low confidence - human required
+
+**Usage:**
+```bash
+# Full 4-model verification
+source scripts/.env
+ANTHROPIC_API_KEY="key" OPENAI_API_KEY="key" \
+python scripts/ocr_verify.py --image page.jpg --output consensus.txt --report report.json
+
+# Batch processing
+python scripts/ocr_verify.py --input-dir scans/ --output-dir verified/ --report-dir reports/
+
+# Cheaper: Only dedicated OCR engines
+python scripts/ocr_verify.py --image page.jpg --engines docai,vision --output out.txt
+```
+
+**Cost:** ~$0.03-0.05 per page (all 4 models)
 
 ### Metadata Tab Structure
 Fields are organized into tabs for different user workflows. Tab names are prefixed with numbers to force correct sort order (ResourceSpace sorts alphabetically):
@@ -110,7 +184,7 @@ Fields are organized into tabs for different user workflows. Tab names are prefi
 
 **Note:** Tabs only display if they contain fields with values. Empty tabs are hidden.
 
-**Complete field schema:** Run `scripts/create_ocr_fields.sql` to create all transcription fields (88-102).
+**Complete field schema:** Run `scripts/db/create_ocr_fields.sql` to create all transcription fields (88-102).
 
 ### Field ID Quick Reference
 
@@ -194,56 +268,75 @@ The base image is private. Render pulls it using configured Docker credentials.
 
 ### Process OCR
 
-**Option 1: Google Cloud Vision API (Recommended for Archival)**
-Simpler setup, uses API key instead of service account credentials.
+**Unified OCR Script (Recommended)**
+The `ocr.py` script auto-detects handwritten vs typewritten content and routes to the optimal engine:
+- **Handwritten content** → Document AI (better accuracy on cursive, historical scripts)
+- **Typewritten content** → Vision API (faster, simpler setup)
 
 ```bash
 cd scripts
-# OCR with language hint
-GOOGLE_API_KEY="your-key" python ocr_google_vision.py \
-  --file document.jpg --lang pl --output ocr.txt
+# Auto-detect and use best engine
+python ocr.py --file letter.jpg --lang pl --output ocr.txt
 
-# JSON output with confidence score
-GOOGLE_API_KEY="your-key" python ocr_google_vision.py \
-  --file document.jpg --lang he --json
+# Force Document AI for known handwritten content
+python ocr.py --file handwritten_letter.jpg --engine documentai --output ocr.txt
+
+# Force Vision API for typewritten documents
+python ocr.py --file typed_doc.jpg --engine vision --output ocr.txt
+
+# JSON output with metadata (includes engine used, confidence, handwriting ratio)
+python ocr.py --file letter.jpg --json
 ```
 
-**Option 2: Google Document AI**
-More complex setup (service account), but offers additional features like form/table extraction.
+**Setting Up Document AI (Required for Handwriting)**
+
+1. **Enable API**: Go to [GCP Console](https://console.cloud.google.com/apis/library/documentai.googleapis.com) and enable Document AI API
+
+2. **Create Processor**:
+   - Navigate to Document AI → Processors → Create Processor
+   - Select "Document OCR" (general purpose)
+   - Region: `us` or `eu` (note this for `DOCUMENTAI_LOCATION`)
+   - Copy the processor ID from the details page
+
+3. **Create Service Account**:
+   - Go to IAM & Admin → Service Accounts → Create Service Account
+   - Name: `documentai-ocr`
+   - Grant role: `roles/documentai.apiUser`
+   - Create JSON key and download
+
+4. **Set Environment Variables**:
+   ```bash
+   export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+   export DOCUMENTAI_PROJECT_ID="your-gcp-project-id"
+   export DOCUMENTAI_LOCATION="us"  # or "eu"
+   export DOCUMENTAI_PROCESSOR_ID="abc123def456"
+   ```
+
+**Vision API Only (Simpler Setup)**
+If you only need typewritten document OCR, Vision API with an API key is sufficient:
 
 ```bash
 cd scripts
-# Process and sync to ResourceSpace
-python process_ocr.py --file document.pdf --resource-id 123 --lang de
-
-# Output to file only
-python process_ocr.py --file document.pdf --output ocr.txt
+GOOGLE_API_KEY="your-key" python ocr.py --file document.jpg --engine vision --output ocr.txt
 ```
 
-**Option 3: Claude Vision OCR (⚠️ NOT for archival work)**
-Uses same Anthropic API as translation. Simpler setup but carries hallucination risk.
+**Legacy Scripts (Still Available)**
+- `ocr_google_vision.py` - Direct Vision API access
+- `process_ocr.py` - Direct Document AI access with ResourceSpace sync
+- `ocr_claude.py` - Claude Vision OCR (⚠️ NOT for archival work)
 
-```bash
-cd scripts
-# Basic OCR
-ANTHROPIC_API_KEY="your-key" python ocr_claude.py \
-  --file document.jpg --output ocr.txt
+**OCR Engine Comparison:**
+| Factor | Vision API | Document AI | Claude Vision (LLM) |
+|--------|------------|-------------|---------------------|
+| Best For | Typewritten docs | Handwriting, forms | Quick experiments |
+| Accuracy (typed) | 98-99% | 98-99% | ~95-97% |
+| Accuracy (handwritten) | 70-85% | 90-95% | ~85-90% |
+| Hallucination Risk | Near zero | Near zero | Can fabricate text |
+| Setup Complexity | API key only | Service account | API key |
+| Cost | ~$0.0015/image | ~$0.01/page | ~$0.01/image |
+| Use for Archival | ✓ Typewritten | ✓ Handwritten | ⚠ Not recommended |
 
-# With language hint
-ANTHROPIC_API_KEY="your-key" python ocr_claude.py \
-  --file document.jpg --lang pl --stdout
-```
-
-**OCR Quality Comparison:**
-| Factor | Google Vision/Document AI | Claude Vision (LLM) |
-|--------|--------------------------|---------------------|
-| Accuracy | 98-99% on typewritten | ~95-97% variable |
-| Hallucination Risk | Near zero | Can fabricate text |
-| Confidence Scores | Yes, per-block | No |
-| Use for Archival | ✓ Recommended | ⚠ Not recommended |
-| Setup Complexity | API key / Service account | API key (same as translation) |
-
-**⚠️ For archival/Holocaust testimony work, always use dedicated OCR (Google Vision or Document AI) to avoid LLM hallucination risks.**
+**⚠️ For archival/Holocaust testimony work, always use dedicated OCR (Vision or Document AI) to avoid LLM hallucination risks.**
 
 ### Sync Transcriptions
 ```bash
@@ -356,14 +449,20 @@ python translate_ocr.py --input ocr_pl.txt --source pl --output translated.txt
 # Translate Hebrew with faster/cheaper Sonnet model
 python translate_ocr.py --input ocr_he.txt --source he --model sonnet --output out.txt
 
-# Batch process Yad Vashem documents (OCR + Translation)
-python process_yadvashem_batch.py \
+# Batch process Yad Vashem documents (auto-detects handwriting)
+python batch_ocr.py \
   --input-dir downloads/yadvashem_3555547 \
   --polish-pages 1-20 \
   --hebrew-pages 21-34
 
+# Force Document AI for known handwritten letters
+python batch_ocr.py \
+  --input-dir downloads/handwritten_letters \
+  --polish-pages 1-10 \
+  --ocr-engine documentai
+
 # Dry run to preview batch processing
-python process_yadvashem_batch.py \
+python batch_ocr.py \
   --input-dir downloads/yadvashem_3555547 \
   --polish-pages 1-20 \
   --hebrew-pages 21-34 \
@@ -448,14 +547,18 @@ python generate_tts.py --list-voices
 
 ### Google Cloud OCR
 
-**Vision API (simpler):**
+The unified `ocr.py` script uses these credentials for auto-detection and routing:
+
+**Vision API (typewritten docs, auto-detection):**
 - `GOOGLE_API_KEY` - Google Cloud API key (enable Vision API in console)
 
-**Document AI (advanced):**
+**Document AI (handwritten content):**
 - `GOOGLE_APPLICATION_CREDENTIALS` - Path to service account JSON key
 - `DOCUMENTAI_PROJECT_ID` - GCP project ID
 - `DOCUMENTAI_LOCATION` - Processor region (us or eu)
 - `DOCUMENTAI_PROCESSOR_ID` - OCR processor ID
+
+**Note:** For auto-detection, both Vision API key and Document AI credentials should be set. The script uses Vision API to detect handwriting ratio, then routes to Document AI if >30% handwriting is detected.
 
 ### Claude Translation (Anthropic)
 - `ANTHROPIC_API_KEY` - Anthropic API key for Claude Opus 4.5 translation
@@ -664,10 +767,18 @@ downloads/
 cd scripts
 
 # 1. Process OCR + translation for multi-language document
-python process_yadvashem_batch.py \
+# (auto-detects handwriting and routes to best OCR engine)
+python batch_ocr.py \
   --input-dir ../downloads/yadvashem_3555547 \
   --polish-pages 1-20 \
   --hebrew-pages 21-34
+
+# For known handwritten content, force Document AI:
+python batch_ocr.py \
+  --input-dir ../downloads/yadvashem_3555547 \
+  --polish-pages 1-20 \
+  --hebrew-pages 21-34 \
+  --ocr-engine documentai
 
 # 2. Upload Polish testimony to ResourceSpace
 RS_BASE_URL="https://your-instance.onrender.com" \

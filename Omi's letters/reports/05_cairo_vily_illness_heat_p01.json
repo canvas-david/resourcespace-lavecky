@@ -1,0 +1,586 @@
+{
+  "source_file": "../Omi's letters/images/05_cairo_vily_illness_heat_p01.png",
+  "models_used": [
+    "vision",
+    "docai",
+    "gpt"
+  ],
+  "overall_confidence": 0.1346,
+  "total_words": 156,
+  "high_confidence": 21,
+  "medium_confidence": 0,
+  "low_confidence": 135,
+  "disagreement_count": 135,
+  "engine_status": {
+    "vision": {
+      "success": true,
+      "chars": 791,
+      "confidence": 0.6493,
+      "error": null
+    },
+    "docai": {
+      "success": true,
+      "chars": 760,
+      "confidence": 0.0,
+      "error": null
+    },
+    "gpt": {
+      "success": false,
+      "chars": 0,
+      "confidence": 0.0,
+      "error": "HTTP Error 404: Not Found"
+    }
+  },
+  "disagreements": [
+    {
+      "position": 0,
+      "readings": {
+        "vision": "comme",
+        "docai": "it"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 1,
+      "readings": {
+        "vision": "a",
+        "docai": "was"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 2,
+      "readings": {
+        "vision": "very",
+        "docai": "a"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 3,
+      "readings": {
+        "vision": "it",
+        "docai": "rost"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 4,
+      "readings": {
+        "vision": "was",
+        "docai": "mervorable"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 5,
+      "readings": {
+        "vision": "a",
+        "docai": "time"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 6,
+      "readings": {
+        "vision": "rost",
+        "docai": "buch"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 7,
+      "readings": {
+        "vision": "mervorable",
+        "docai": "to"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 8,
+      "readings": {
+        "vision": "time",
+        "docai": "cairo"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 9,
+      "readings": {
+        "vision": "buch",
+        "docai": "vily"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 10,
+      "readings": {
+        "vision": "to",
+        "docai": "was"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 11,
+      "readings": {
+        "vision": "cairo",
+        "docai": "th"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 12,
+      "readings": {
+        "vision": "vily",
+        "docai": "comme"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 13,
+      "readings": {
+        "vision": "was",
+        "docai": "き"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 14,
+      "readings": {
+        "vision": "the",
+        "docai": "a"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 15,
+      "readings": {
+        "vision": "bad",
+        "docai": "very"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 16,
+      "readings": {
+        "vision": "state",
+        "docai": "bad"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 17,
+      "readings": {
+        "vision": "of",
+        "docai": "state"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 18,
+      "readings": {
+        "vision": "health",
+        "docai": "of"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 19,
+      "readings": {
+        "vision": "we",
+        "docai": "health"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 20,
+      "readings": {
+        "vision": "hard",
+        "docai": "we"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 21,
+      "readings": {
+        "vision": "one",
+        "docai": "hard"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 22,
+      "readings": {
+        "vision": "poom",
+        "docai": "one"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 23,
+      "readings": {
+        "vision": "in",
+        "docai": "poom"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 24,
+      "readings": {
+        "vision": "a",
+        "docai": "in"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 25,
+      "readings": {
+        "vision": "teusion",
+        "docai": "a"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 26,
+      "readings": {
+        "vision": "luckily",
+        "docai": "a"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 27,
+      "readings": {
+        "vision": "the",
+        "docai": "teusion"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 28,
+      "readings": {
+        "vision": "proprietes",
+        "docai": "luckily"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 29,
+      "readings": {
+        "vision": "olid",
+        "docai": "the"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 30,
+      "readings": {
+        "vision": "rol",
+        "docai": "proprietes"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 31,
+      "readings": {
+        "vision": "sond",
+        "docai": "olid"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 32,
+      "readings": {
+        "vision": "lily",
+        "docai": "rol"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 33,
+      "readings": {
+        "vision": "to",
+        "docai": "sond"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 34,
+      "readings": {
+        "vision": "hospital",
+        "docai": "lily"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 35,
+      "readings": {
+        "vision": "as",
+        "docai": "to"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 36,
+      "readings": {
+        "vision": "suggested",
+        "docai": "hospital"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 37,
+      "readings": {
+        "vision": "by",
+        "docai": "as"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 38,
+      "readings": {
+        "vision": "a",
+        "docai": "suggested"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 39,
+      "readings": {
+        "vision": "local",
+        "docai": "by"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 40,
+      "readings": {
+        "vision": "doctor",
+        "docai": "a"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 41,
+      "readings": {
+        "vision": "who",
+        "docai": "local"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 42,
+      "readings": {
+        "vision": "thought",
+        "docai": "doctor"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 43,
+      "readings": {
+        "vision": "that",
+        "docai": "who"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 44,
+      "readings": {
+        "vision": "he",
+        "docai": "thought"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 45,
+      "readings": {
+        "vision": "had",
+        "docai": "that"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 46,
+      "readings": {
+        "vision": "typshold",
+        "docai": "he"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 47,
+      "readings": {
+        "vision": "we",
+        "docai": "had"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 48,
+      "readings": {
+        "vision": "kept",
+        "docai": "typshold"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 49,
+      "readings": {
+        "vision": "him",
+        "docai": "we"
+      },
+      "chosen": null,
+      "agreement": "1/2",
+      "confidence": "low",
+      "reason": "No consensus - flagged for human review"
+    }
+  ]
+}
