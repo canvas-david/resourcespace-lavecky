@@ -494,15 +494,62 @@ resource_polish/
 
 Note: Images must still be uploaded manually via UI (API file upload requires server-side path configuration).
 
-### Generate TTS Audio
+### Generate TTS Audio (Eleven v3)
+
+The TTS Audio plugin uses **ElevenLabs Eleven v3** model for emotionally expressive speech synthesis.
+
+**Features:**
+- 70+ languages supported
+- Emotional delivery via direction tags
+- Custom "Omi" voice (German, cloned)
+- Auto-chunking for texts > 4800 characters
+- Multi-part audio with playlist playback
+
+**UI Usage:**
+1. Navigate to a resource with Formatted Transcription (Field 96)
+2. In the "Audio Transcription" panel, select:
+   - **Direction**: Overall tone/emotion (e.g., "Elderly & Nostalgic")
+   - **Voice**: Select "★ Omi (German)" or other voice
+3. Click "Generate Audio"
+4. For long texts, multiple audio parts are created automatically
+
+**Direction Presets (prepended to text):**
+| Preset | Tag Added |
+|--------|-----------|
+| Gentle & Warm | `[gentle, warm]` |
+| Elderly & Nostalgic | `[elderly, nostalgic]` |
+| Sad & Reflective | `[sad, reflective]` |
+| Storytelling | `[storytelling]` |
+| Serious & Somber | `[serious, somber]` |
+| Whispering | `[whispering]` |
+
+**Manual Emotion Tags (in Formatted Transcription):**
+Add these directly in the transcription text for fine-grained control:
+
+```
+[gentle] Dear Danny, I want to tell you about Vienna...
+[sad] Those were difficult times. [sighing] We had to leave everything behind.
+[laughing] But your grandfather, he always found a way to make us smile.
+```
+
+| Tag Type | Examples |
+|----------|----------|
+| Emotions | `[sad]`, `[happy]`, `[angry]`, `[fearful]`, `[nostalgic]` |
+| Delivery | `[whispering]`, `[shouting]`, `[laughing]`, `[crying]`, `[sighing]` |
+| Direction | `[storytelling]`, `[elderly]`, `[gentle]`, `[serious]` |
+| Punctuation | `...` for trailing off, `-` for interruptions |
+
+**Character Limit:** v3 supports 5,000 characters per request. The plugin auto-chunks longer texts into multiple parts (4,800 char limit with buffer for direction tags).
+
+**CLI Usage:**
 ```bash
 cd scripts
 # Generate TTS from formatted transcription
-python generate_tts.py --resource-id 123 --voice rachel
+python generate_tts.py --resource-id 123 --voice omi
 
 # Combined sync + TTS generation
 python sync_transcription.py --resource-id 123 \
- --formatted formatted.txt --generate-tts --tts-voice adam
+ --formatted formatted.txt --generate-tts --tts-voice omi
 
 # List available voices
 python generate_tts.py --list-voices
@@ -563,8 +610,12 @@ The unified `ocr.py` script uses these credentials for auto-detection and routin
 ### Claude Translation (Anthropic)
 - `ANTHROPIC_API_KEY` - Anthropic API key for Claude Opus 4.5 translation
 
-### ElevenLabs TTS
+### ElevenLabs TTS (Eleven v3)
 - `ELEVENLABS_API_KEY` - ElevenLabs API key for TTS generation (set in Render dashboard)
+
+**Custom Voice:** Omi (ID: `RLUByKTYYITeAvbZnWex`) - German grandmother voice for family history narration.
+
+**Model:** `eleven_v3` (alpha) - Emotionally expressive with 70+ languages, 5000 char limit per request.
 
 ### OpenAI GPT (Automated Metadata Tagging)
 - `OPENAI_API_KEY` - OpenAI API key for GPT metadata generation

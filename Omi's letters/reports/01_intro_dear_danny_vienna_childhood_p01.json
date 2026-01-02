@@ -5,12 +5,12 @@
     "docai",
     "gpt"
   ],
-  "overall_confidence": 0.2743,
+  "overall_confidence": 0.0104,
   "total_words": 288,
-  "high_confidence": 79,
-  "medium_confidence": 0,
-  "low_confidence": 209,
-  "disagreement_count": 209,
+  "high_confidence": 3,
+  "medium_confidence": 81,
+  "low_confidence": 204,
+  "disagreement_count": 285,
   "engine_status": {
     "vision": {
       "success": true,
@@ -25,562 +25,612 @@
       "error": null
     },
     "gpt": {
-      "success": false,
-      "chars": 0,
-      "confidence": 0.0,
-      "error": "HTTP Error 404: Not Found"
+      "success": true,
+      "chars": 1434,
+      "confidence": 0.9,
+      "error": null
     }
   },
   "disagreements": [
     {
+      "position": 0,
+      "readings": {
+        "vision": "be",
+        "docai": "be",
+        "gpt": "dear"
+      },
+      "chosen": "be",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 1,
+      "readings": {
+        "vision": "dear",
+        "docai": "dear",
+        "gpt": "unclear"
+      },
+      "chosen": "dear",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 2,
+      "readings": {
+        "vision": "daunny",
+        "docai": "daunny",
+        "gpt": "after"
+      },
+      "chosen": "daunny",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 3,
+      "readings": {
+        "vision": "after",
+        "docai": "after",
+        "gpt": "having"
+      },
+      "chosen": "after",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 4,
+      "readings": {
+        "vision": "have",
+        "docai": "have",
+        "gpt": "tryed"
+      },
+      "chosen": "have",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 5,
+      "readings": {
+        "vision": "tryed",
+        "docai": "tryed",
+        "gpt": "several"
+      },
+      "chosen": "tryed",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
       "position": 6,
       "readings": {
         "vision": "perusal",
-        "docai": "several"
+        "docai": "several",
+        "gpt": "times"
       },
       "chosen": null,
-      "agreement": "1/2",
+      "agreement": "1/3",
       "confidence": "low",
       "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 7,
+      "readings": {
+        "vision": "times",
+        "docai": "times",
+        "gpt": "to"
+      },
+      "chosen": "times",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 8,
+      "readings": {
+        "vision": "to",
+        "docai": "to",
+        "gpt": "write"
+      },
+      "chosen": "to",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 9,
+      "readings": {
+        "vision": "write",
+        "docai": "write",
+        "gpt": "my"
+      },
+      "chosen": "write",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
       "position": 10,
       "readings": {
         "vision": "mg",
-        "docai": "my"
+        "docai": "my",
+        "gpt": "memoires"
       },
       "chosen": null,
-      "agreement": "1/2",
+      "agreement": "1/3",
       "confidence": "low",
       "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 11,
+      "readings": {
+        "vision": "way",
+        "docai": "way",
+        "gpt": "in"
+      },
+      "chosen": "way",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 12,
+      "readings": {
+        "vision": "funny",
+        "docai": "funny",
+        "gpt": "an"
+      },
+      "chosen": "funny",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 13,
+      "readings": {
+        "vision": "exiting",
+        "docai": "exiting",
+        "gpt": "unorthodox"
+      },
+      "chosen": "exiting",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 14,
+      "readings": {
+        "vision": "memories",
+        "docai": "memories",
+        "gpt": "way"
+      },
+      "chosen": "memories",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 15,
+      "readings": {
+        "vision": "in",
+        "docai": "in",
+        "gpt": "frommy"
+      },
+      "chosen": "in",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 16,
+      "readings": {
+        "vision": "an",
+        "docai": "an",
+        "gpt": "feelings"
+      },
+      "chosen": "an",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 17,
+      "readings": {
+        "vision": "unorthodox",
+        "docai": "unorthodox",
+        "gpt": "greed"
+      },
+      "chosen": "unorthodox",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 18,
+      "readings": {
+        "vision": "good",
+        "docai": "good",
+        "gpt": "i"
+      },
+      "chosen": "good",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 19,
+      "readings": {
+        "vision": "i",
+        "docai": "i",
+        "gpt": "gave"
+      },
+      "chosen": "i",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 20,
+      "readings": {
+        "vision": "gave",
+        "docai": "gave",
+        "gpt": "up"
+      },
+      "chosen": "gave",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 21,
+      "readings": {
+        "vision": "up",
+        "docai": "up",
+        "gpt": "i"
+      },
+      "chosen": "up",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 22,
+      "readings": {
+        "vision": "i",
+        "docai": "i",
+        "gpt": "will"
+      },
+      "chosen": "i",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 23,
+      "readings": {
+        "vision": "will",
+        "docai": "will",
+        "gpt": "write"
+      },
+      "chosen": "will",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 24,
+      "readings": {
+        "vision": "just",
+        "docai": "just",
+        "gpt": "facts"
+      },
+      "chosen": "just",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 25,
+      "readings": {
+        "vision": "write",
+        "docai": "write",
+        "gpt": "chronological"
+      },
+      "chosen": "write",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
       "position": 26,
       "readings": {
         "vision": "faicts",
-        "docai": "facts"
+        "docai": "facts",
+        "gpt": "later"
       },
       "chosen": null,
-      "agreement": "1/2",
+      "agreement": "1/3",
       "confidence": "low",
       "reason": "No consensus - flagged for human review"
+    },
+    {
+      "position": 27,
+      "readings": {
+        "vision": "in",
+        "docai": "in",
+        "gpt": "when"
+      },
+      "chosen": "in",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
       "position": 28,
       "readings": {
         "vision": "chronological",
-        "docai": "chronologicall"
+        "docai": "chronologicall",
+        "gpt": "and"
       },
       "chosen": null,
-      "agreement": "1/2",
+      "agreement": "1/3",
       "confidence": "low",
       "reason": "No consensus - flagged for human review"
     },
     {
-      "position": 80,
+      "position": 29,
       "readings": {
-        "vision": "feery",
-        "docai": "lates"
+        "vision": "order",
+        "docai": "order",
+        "gpt": "if"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "order",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 81,
+      "position": 30,
       "readings": {
-        "vision": "lates",
-        "docai": "after"
+        "vision": "and",
+        "docai": "and",
+        "gpt": "i"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "and",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 82,
-      "readings": {
-        "vision": "after",
-        "docai": "th"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 83,
-      "readings": {
-        "vision": "th",
-        "docai": "at"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 84,
-      "readings": {
-        "vision": "at",
-        "docai": "that"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 85,
-      "readings": {
-        "vision": "that",
-        "docai": "me"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 86,
-      "readings": {
-        "vision": "me",
-        "docai": "6"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 87,
-      "readings": {
-        "vision": "6",
-        "docai": "4"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 88,
-      "readings": {
-        "vision": "4",
-        "docai": "wars"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 89,
-      "readings": {
-        "vision": "wars",
-        "docai": "what"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 90,
-      "readings": {
-        "vision": "what",
-        "docai": "was"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 91,
-      "readings": {
-        "vision": "was",
-        "docai": "foxy"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 92,
-      "readings": {
-        "vision": "forny",
-        "docai": "little"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 93,
-      "readings": {
-        "vision": "lodiny",
-        "docai": "did"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 94,
-      "readings": {
-        "vision": "little",
-        "docai": "they"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 95,
-      "readings": {
-        "vision": "did",
-        "docai": "how"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 96,
-      "readings": {
-        "vision": "they",
-        "docai": "that"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 97,
-      "readings": {
-        "vision": "how",
-        "docai": "that"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 98,
-      "readings": {
-        "vision": "that",
-        "docai": "is"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 99,
-      "readings": {
-        "vision": "that",
-        "docai": "wit"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 100,
-      "readings": {
-        "vision": "is",
-        "docai": "human"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 101,
-      "readings": {
-        "vision": "wit",
-        "docai": "nature"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 102,
-      "readings": {
-        "vision": "hamare",
-        "docai": "my"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 103,
-      "readings": {
-        "vision": "nature",
-        "docai": "parents"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 104,
-      "readings": {
-        "vision": "my",
-        "docai": "than"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 105,
-      "readings": {
-        "vision": "parents",
-        "docai": "electidect"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 106,
+      "position": 31,
       "readings": {
         "vision": "than",
-        "docai": "the"
+        "docai": "than",
+        "gpt": "will"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "than",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 107,
+      "position": 32,
       "readings": {
-        "vision": "decided",
-        "docai": "king"
+        "vision": "if",
+        "docai": "if",
+        "gpt": "still"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "if",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 108,
-      "readings": {
-        "vision": "a",
-        "docai": "near"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 109,
-      "readings": {
-        "vision": "forctery",
-        "docai": "vienna"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 110,
-      "readings": {
-        "vision": "near",
-        "docai": "fnzersdorf"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 111,
-      "readings": {
-        "vision": "vienna",
-        "docai": "2"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 112,
-      "readings": {
-        "vision": "fnzersdorf",
-        "docai": "yes"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 113,
-      "readings": {
-        "vision": "and",
-        "docai": "i"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 114,
-      "readings": {
-        "vision": "yes",
-        "docai": "should"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 115,
+      "position": 33,
       "readings": {
         "vision": "i",
-        "docai": "and"
+        "docai": "i",
+        "gpt": "have"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "i",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 116,
+      "position": 34,
       "readings": {
-        "vision": "should",
-        "docai": "would"
+        "vision": "will",
+        "docai": "will",
+        "gpt": "time"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "will",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 117,
+      "position": 35,
       "readings": {
-        "vision": "and",
-        "docai": "have"
+        "vision": "still",
+        "docai": "still",
+        "gpt": "i"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "still",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 118,
-      "readings": {
-        "vision": "would",
-        "docai": "taken"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 119,
+      "position": 36,
       "readings": {
         "vision": "have",
-        "docai": "you"
+        "docai": "have",
+        "gpt": "might"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "have",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 120,
+      "position": 37,
       "readings": {
-        "vision": "taken",
-        "docai": "there"
+        "vision": "time",
+        "docai": "time",
+        "gpt": "write"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "time",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 121,
+      "position": 38,
+      "readings": {
+        "vision": "i",
+        "docai": "i",
+        "gpt": "a"
+      },
+      "chosen": "i",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 39,
+      "readings": {
+        "vision": "might",
+        "docai": "might",
+        "gpt": "few"
+      },
+      "chosen": "might",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 40,
+      "readings": {
+        "vision": "write",
+        "docai": "write",
+        "gpt": "episodes"
+      },
+      "chosen": "write",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 41,
+      "readings": {
+        "vision": "a",
+        "docai": "a",
+        "gpt": "of"
+      },
+      "chosen": "a",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 42,
+      "readings": {
+        "vision": "few",
+        "docai": "few",
+        "gpt": "my"
+      },
+      "chosen": "few",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 43,
+      "readings": {
+        "vision": "episodes",
+        "docai": "episodes",
+        "gpt": "life"
+      },
+      "chosen": "episodes",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 44,
+      "readings": {
+        "vision": "of",
+        "docai": "of",
+        "gpt": "as"
+      },
+      "chosen": "of",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 45,
+      "readings": {
+        "vision": "my",
+        "docai": "my",
+        "gpt": "you"
+      },
+      "chosen": "my",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 46,
+      "readings": {
+        "vision": "life",
+        "docai": "life",
+        "gpt": "know"
+      },
+      "chosen": "life",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 47,
+      "readings": {
+        "vision": "as",
+        "docai": "as",
+        "gpt": "i"
+      },
+      "chosen": "as",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
+    },
+    {
+      "position": 48,
       "readings": {
         "vision": "you",
-        "docai": "when"
+        "docai": "you",
+        "gpt": "was"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "you",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     },
     {
-      "position": 122,
+      "position": 49,
       "readings": {
-        "vision": "there",
-        "docai": "we"
+        "vision": "know",
+        "docai": "know",
+        "gpt": "born"
       },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 123,
-      "readings": {
-        "vision": "when",
-        "docai": "were"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 124,
-      "readings": {
-        "vision": "we",
-        "docai": "a"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
-    },
-    {
-      "position": 125,
-      "readings": {
-        "vision": "were",
-        "docai": "forctery"
-      },
-      "chosen": null,
-      "agreement": "1/2",
-      "confidence": "low",
-      "reason": "No consensus - flagged for human review"
+      "chosen": "know",
+      "agreement": "2/3",
+      "confidence": "medium",
+      "reason": "OCR engines agree, LLMs differ"
     }
   ]
 }

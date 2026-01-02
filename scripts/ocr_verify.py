@@ -247,7 +247,7 @@ class GPTVisionClient:
     """OpenAI GPT Vision API client for OCR verification."""
     
     API_URL = "https://api.openai.com/v1/chat/completions"
-    MODEL = "gpt-5.2-thinking"  # Latest model with enhanced vision (Dec 2025)
+    MODEL = "gpt-4o"  # Vision-capable model
     
     def __init__(self, api_key: str, model: str = None):
         self.api_key = api_key
