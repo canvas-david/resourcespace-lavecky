@@ -98,17 +98,17 @@ The sync_transcription.py enforces archival integrity:
 **Full field reference:** See `scripts/ARCHIVAL_API_REFERENCE.md` for complete field IDs (88-102) and API documentation.
 
 ### Metadata Tab Structure
-Fields are organized into tabs for different user workflows:
+Fields are organized into tabs for different user workflows. Tab names are prefixed with numbers to force correct sort order (ResourceSpace sorts alphabetically):
 
-| Tab | Purpose | Field IDs |
-|-----|---------|-----------|
+| Tab Name | Purpose | Field IDs |
+|----------|---------|-----------|
 | 1. Default | Standard asset metadata | (built-in) |
 | 2. Transcription | Readable content (full-width text) | 89, 96, 101 |
 | 3. Review | Editorial workflow | 94, 95, 98, 99 |
 | 4. Technical | Processing details + source language | 90, 91, 92, 93, 97, 100, 102 |
 | 5. Archival | Raw source data | 88 |
 
-Tab names may be prefixed with numbers to force correct sort order (ResourceSpace sorts alphabetically).
+**Note:** Tabs only display if they contain fields with values. Empty tabs are hidden.
 
 **Complete field schema:** Run `scripts/create_ocr_fields.sql` to create all transcription fields (88-102).
 
