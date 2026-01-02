@@ -51,8 +51,24 @@ if (tts_audio_has_audio($ref)) {
     json_success('Audio already exists', ['skipped' => true]);
 }
 
-// Get transcription text
-$transcription = get_data_by_field($ref, TTS_SOURCE_FIELD);
+// Get transcription text - try TTS Script field first (with emotion tags), fallback to Formatted
+$transcription = '';
+$source_field = 'formatted';
+
+// Try TTS Script field first (Field 107 - pre-annotated with emotion tags)
+if (defined('TTS_SCRIPT_FIELD')) {
+    $transcription = get_data_by_field($ref, TTS_SCRIPT_FIELD);
+    if (!empty(trim($transcription))) {
+        $source_field = 'tts_script';
+    }
+}
+
+// Fall back to Formatted Transcription (Field 96)
+if (empty(trim($transcription))) {
+    $transcription = get_data_by_field($ref, TTS_SOURCE_FIELD);
+    $source_field = 'formatted';
+}
+
 if (empty(trim($transcription))) {
     json_error('No transcription text found');
 }
@@ -161,7 +177,8 @@ foreach ($chunks as $part_num => $chunk_text) {
     $part_label = $total_parts > 1 ? " - Part " . ($part_num + 1) : "";
     $file_name = "TTS Audio" . $part_label;
     $direction_label = !empty($direction) ? ", direction: " . trim($direction, '[]') : "";
-    $description = "Text-to-speech audio (voice: $voice, model: $model{$direction_label})";
+    $source_label = $source_field === 'tts_script' ? ", source: TTS Script" : "";
+    $description = "Text-to-speech audio (voice: $voice, model: $model{$direction_label}{$source_label})";
     
     // Add alternative file record to database
     $file_size = filesize($temp_file);
@@ -223,6 +240,7 @@ if (!empty($errors)) {
 json_success('Audio generated successfully!', [
     'voice' => $voice,
     'parts' => count($generated_files),
+    'source' => $source_field,
     'files' => $generated_files
 ]);
 

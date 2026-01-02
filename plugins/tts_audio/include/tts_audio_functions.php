@@ -12,8 +12,11 @@ define('TTS_FIELD_ENGINE', 104);
 define('TTS_FIELD_VOICE', 105);
 define('TTS_FIELD_GENERATED_AT', 106);
 
-// Source field - Reader Formatted transcription
+// Source field - Reader Formatted transcription (fallback)
 define('TTS_SOURCE_FIELD', 96);
+
+// TTS Script field - Emotion-tagged version for v3 (preferred source)
+define('TTS_SCRIPT_FIELD', 107);
 
 // Eleven v3 character limit (leave buffer for direction tags)
 define('TTS_V3_CHAR_LIMIT', 4800);
@@ -48,14 +51,54 @@ function tts_audio_get_metadata($ref)
 
 /**
  * Check if resource has transcription text available
+ * Checks TTS Script field first, then Formatted Transcription
  * 
  * @param int $ref Resource reference
  * @return bool
  */
 function tts_audio_has_transcription($ref)
 {
-    $value = get_data_by_field($ref, TTS_SOURCE_FIELD);
+    // Check TTS Script field first (emotion-tagged)
+    $script = get_data_by_field($ref, TTS_SCRIPT_FIELD);
+    if (!empty(trim($script))) {
+        return true;
+    }
+    
+    // Fall back to Formatted Transcription
+    $formatted = get_data_by_field($ref, TTS_SOURCE_FIELD);
+    return !empty(trim($formatted));
+}
+
+/**
+ * Check if resource has TTS Script (emotion-tagged) text
+ * 
+ * @param int $ref Resource reference
+ * @return bool
+ */
+function tts_audio_has_script($ref)
+{
+    $value = get_data_by_field($ref, TTS_SCRIPT_FIELD);
     return !empty(trim($value));
+}
+
+/**
+ * Get the best available text source for TTS
+ * Returns TTS Script if available, otherwise Formatted Transcription
+ * 
+ * @param int $ref Resource reference
+ * @return array ['text' => string, 'source' => 'tts_script'|'formatted']
+ */
+function tts_audio_get_text($ref)
+{
+    // Try TTS Script first (pre-annotated with emotion tags)
+    $script = get_data_by_field($ref, TTS_SCRIPT_FIELD);
+    if (!empty(trim($script))) {
+        return ['text' => $script, 'source' => 'tts_script'];
+    }
+    
+    // Fall back to Formatted Transcription
+    $formatted = get_data_by_field($ref, TTS_SOURCE_FIELD);
+    return ['text' => $formatted, 'source' => 'formatted'];
 }
 
 /**

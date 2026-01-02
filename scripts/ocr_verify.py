@@ -81,7 +81,7 @@ ENGINE_NAMES = {
     "docai": "Document AI",
     "vision": "Vision API",
     "claude": "Claude Vision",
-    "gpt": "GPT-5.2 Vision",
+    "gpt": "GPT-4o Vision",
 }
 
 # -----------------------------------------------------------------------------
@@ -806,7 +806,7 @@ Examples:
             if api_key:
                 gpt_client = GPTVisionClient(api_key)
             else:
-                logger.warning("OPENAI_API_KEY not set - GPT-5.2 disabled")
+                logger.warning("OPENAI_API_KEY not set - GPT-4o disabled")
         
         # Create engine
         engine = OCRVerificationEngine(

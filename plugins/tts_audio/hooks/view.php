@@ -124,12 +124,21 @@ function HookTts_audioViewCustompanels()
             
             <?php else: ?>
             <!-- Generate controls (no audio yet) -->
+            <?php 
+            $has_tts_script = tts_audio_has_script($ref);
+            ?>
             <p style="margin: 10px 0; color: #666;">
                 <?php echo isset($lang['tts_no_audio']) ? escape($lang['tts_no_audio']) : 'No audio has been generated yet.'; ?>
             </p>
-            <p style="margin: 5px 0; font-size: 0.85em; color: #888;">
-                <i class="fa fa-info-circle"></i> Tip: Add emotion tags like <code>[gentle]</code> or <code>[sad]</code> directly in the transcription for fine control.
+            <?php if ($has_tts_script): ?>
+            <p style="margin: 5px 0; font-size: 0.85em; color: #28a745;">
+                <i class="fa fa-check-circle"></i> TTS Script with emotion tags is available and will be used.
             </p>
+            <?php else: ?>
+            <p style="margin: 5px 0; font-size: 0.85em; color: #888;">
+                <i class="fa fa-info-circle"></i> Using Formatted Transcription. Add TTS Script with <code>annotate_tts.py</code> for emotion tags.
+            </p>
+            <?php endif; ?>
             <div style="margin-bottom: 8px;">
                 <label style="font-size: 0.9em; color: #666;">Direction:</label>
                 <select id="tts-direction-select" style="padding: 4px; margin-left: 4px;">

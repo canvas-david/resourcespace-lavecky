@@ -3,13 +3,14 @@
   "models_used": [
     "vision",
     "docai",
+    "claude",
     "gpt"
   ],
   "overall_confidence": 0.027,
   "total_words": 185,
   "high_confidence": 5,
-  "medium_confidence": 32,
-  "low_confidence": 148,
+  "medium_confidence": 33,
+  "low_confidence": 147,
   "disagreement_count": 180,
   "engine_status": {
     "vision": {
@@ -24,9 +25,15 @@
       "confidence": 0.0,
       "error": null
     },
+    "claude": {
+      "success": false,
+      "chars": 0,
+      "confidence": 0.0,
+      "error": "[SSL: SSLV3_ALERT_BAD_RECORD_MAC] sslv3 alert bad record mac (_ssl.c:2633)"
+    },
     "gpt": {
       "success": true,
-      "chars": 867,
+      "chars": 861,
       "confidence": 0.9,
       "error": null
     }
@@ -289,7 +296,7 @@
       "readings": {
         "vision": "they",
         "docai": "thony",
-        "gpt": "of"
+        "gpt": "a"
       },
       "chosen": null,
       "agreement": "1/3",
@@ -337,7 +344,7 @@
       "readings": {
         "vision": "but",
         "docai": "трам",
-        "gpt": "generations"
+        "gpt": "generation"
       },
       "chosen": null,
       "agreement": "1/3",
@@ -517,7 +524,7 @@
       "readings": {
         "vision": "generation",
         "docai": "you",
-        "gpt": "start"
+        "gpt": "at"
       },
       "chosen": null,
       "agreement": "1/3",
@@ -565,7 +572,7 @@
       "readings": {
         "vision": "begin",
         "docai": "σ",
-        "gpt": "easy"
+        "gpt": "s"
       },
       "chosen": null,
       "agreement": "1/3",
@@ -577,7 +584,7 @@
       "readings": {
         "vision": "веди",
         "docai": "how",
-        "gpt": "to"
+        "gpt": "easy"
       },
       "chosen": null,
       "agreement": "1/3",
@@ -589,7 +596,7 @@
       "readings": {
         "vision": "beginning",
         "docai": "do",
-        "gpt": "say"
+        "gpt": "to"
       },
       "chosen": null,
       "agreement": "1/3",
@@ -601,7 +608,7 @@
       "readings": {
         "vision": "σ",
         "docai": "i",
-        "gpt": "but"
+        "gpt": "say"
       },
       "chosen": null,
       "agreement": "1/3",
@@ -613,7 +620,7 @@
       "readings": {
         "vision": "all",
         "docai": "begin",
-        "gpt": "where"
+        "gpt": "but"
       },
       "chosen": null,
       "agreement": "1/3",
@@ -625,7 +632,7 @@
       "readings": {
         "vision": "you",
         "docai": "thats",
-        "gpt": "is"
+        "gpt": "where"
       },
       "chosen": null,
       "agreement": "1/3",

@@ -14,10 +14,10 @@
 -- 8 = Dynamic keywords list
 
 -- First, delete any existing fields with these IDs (in case of partial setup)
-DELETE FROM resource_type_field WHERE ref IN (103, 104, 105, 106);
+DELETE FROM resource_type_field WHERE ref IN (103, 104, 105, 106, 107);
 
 -- Delete any orphaned data for these fields
-DELETE FROM resource_data WHERE resource_type_field IN (103, 104, 105, 106);
+DELETE FROM resource_data WHERE resource_type_field IN (103, 104, 105, 106, 107);
 
 -- Create TTS Status - Field 103
 -- Values: pending, done, failed
@@ -39,5 +39,15 @@ VALUES (105, 'ttsvoice', 'TTS Voice', 0, 950, 1, 0, 1, 1, '', 'Transcription', '
 INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, resource_type, display_field, enable_advanced_search, display_template, tab_name, smart_theme_name, exiftool_field, advanced_search, simple_search, help_text, display_as_dropdown, tooltip_text, regexp_filter, hide_when_uploading, hide_when_restricted, required, linked_data_field, automatic_nodes_ordering, display_condition, onchange_macro, field_constraint, active, sync_field)
 VALUES (106, 'ttsgeneratedat', 'TTS Generated At', 0, 960, 0, 0, 1, 1, '', 'Transcription', '', '', 1, 0, 'Timestamp of TTS audio generation', 0, '', '', 0, 0, 0, '', 1, '', '', 0, 1, 0);
 
+-- Create TTS Script - Field 107
+-- Emotion-tagged version of formatted transcription for ElevenLabs v3
+-- Multi-line textarea (type 5) in Transcription tab
+INSERT INTO resource_type_field (ref, name, title, type, order_by, keywords_index, resource_type, display_field, enable_advanced_search, display_template, tab_name, smart_theme_name, exiftool_field, advanced_search, simple_search, help_text, display_as_dropdown, tooltip_text, regexp_filter, hide_when_uploading, hide_when_restricted, required, linked_data_field, automatic_nodes_ordering, display_condition, onchange_macro, field_constraint, active, sync_field)
+VALUES (107, 'ttsscript', 'TTS Script', 5, 25, 0, 0, 1, 0, '', 'Transcription', '', '', 0, 0, 'Emotion-tagged version of transcription for TTS generation. Contains tags like [gentle], [sad], [pause] for ElevenLabs v3.', 0, '', '', 0, 0, 0, '', 1, '', '', 0, 1, 0);
+
+-- Link TTS Script field to all resource types
+INSERT IGNORE INTO resource_type_field_resource_type (resource_type_field, resource_type) 
+VALUES (107, 0), (107, 1), (107, 2), (107, 3), (107, 4);
+
 -- Verify creation
-SELECT ref, name, title, type FROM resource_type_field WHERE ref >= 103 AND ref <= 106 ORDER BY ref;
+SELECT ref, name, title, type FROM resource_type_field WHERE ref >= 103 AND ref <= 107 ORDER BY ref;

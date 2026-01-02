@@ -209,6 +209,7 @@ Fields are organized into tabs for different user workflows. Tab names are prefi
 | 104 | `ttsengine` | Transcription | TTS engine |
 | 105 | `ttsvoice` | Transcription | TTS voice used |
 | 106 | `ttsgeneratedat` | Transcription | TTS timestamp |
+| 107 | `ttsscript` | Transcription | Emotion-tagged TTS script |
 
 **Database schema:** The `resource_type_field.tab` column is an integer FK to `tab.ref`, not a string. Create tabs first, then reference by ID:
 ```sql
@@ -554,6 +555,54 @@ python sync_transcription.py --resource-id 123 \
 # List available voices
 python generate_tts.py --list-voices
 ```
+
+### TTS Annotation Pipeline
+
+Automatically add emotion tags to transcription text for better TTS output with ElevenLabs v3.
+
+**Workflow:**
+```
+Formatted Transcription (Field 96) → annotate_tts.py → TTS Script (Field 107) → TTS Generation
+```
+
+The TTS plugin reads from Field 107 (TTS Script) first, falling back to Field 96 (Formatted) if empty.
+
+**Hybrid Annotation Approach:**
+1. **Rule-based** (fast, free) - Automatic patterns:
+   - `...` at sentence end → `[trailing]`
+   - Paragraph breaks → `[pause]`
+   - ALL CAPS words → `[emphasized]`
+   - Document start → `[elderly, warm]`
+
+2. **LLM-based** (semantic) - Claude analyzes content and adds contextual tags:
+   - Emotional passages: `[sad]`, `[nostalgic]`, `[joyful]`
+   - Delivery cues: `[sighing]`, `[laughing]`, `[whispering]`
+
+**CLI Usage:**
+```bash
+cd scripts
+
+# Annotate a file (rules only - fast, free)
+python annotate_tts.py --input formatted.txt --output tts_script.txt --rules-only
+
+# Annotate with LLM (hybrid - better quality)
+ANTHROPIC_API_KEY="key" python annotate_tts.py --input formatted.txt --output tts_script.txt
+
+# Direct ResourceSpace integration (reads Field 96, writes Field 107)
+RS_BASE_URL="https://..." RS_API_KEY="key" python annotate_tts.py --resource-id 123
+
+# Combined with sync_transcription.py
+python sync_transcription.py --resource-id 123 \
+    --formatted formatted.txt --tts-annotate --generate-tts
+
+# With LLM annotation
+ANTHROPIC_API_KEY="key" python sync_transcription.py --resource-id 123 \
+    --formatted formatted.txt --tts-annotate --tts-annotate-llm --generate-tts
+```
+
+**Cost:**
+- Rules only: Free
+- LLM (Haiku): ~$0.01-0.02 per page
 
 ### Configure OpenAI GPT Automated Tagging
 1. Set `OPENAI_API_KEY` environment variable (or configure via UI)

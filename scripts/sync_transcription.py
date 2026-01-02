@@ -88,6 +88,9 @@ class FieldIDs:
     
     # Translation metadata
     TRANSLATION_SOURCE_LANGUAGE: int = 102
+    
+    # TTS
+    TTS_SCRIPT: int = 107  # Emotion-tagged script for TTS generation
 
 
 FIELDS = FieldIDs()
@@ -791,6 +794,75 @@ def read_file(path: str) -> str:
     return p.read_text(encoding="utf-8")
 
 
+def annotate_tts_script(
+    base_url: str,
+    user: str,
+    api_key: str,
+    resource_id: int,
+    use_llm: bool = False,
+    anthropic_key: str = None
+) -> Dict[str, Any]:
+    """
+    Annotate Formatted Transcription (Field 96) with emotion tags
+    and write to TTS Script (Field 107).
+    
+    Uses annotate_tts.py for the actual annotation.
+    """
+    import subprocess
+    
+    # Find annotate_tts.py relative to this script
+    script_dir = Path(__file__).parent
+    annotate_script = script_dir / "annotate_tts.py"
+    
+    if not annotate_script.exists():
+        return {"success": False, "message": f"Annotate script not found: {annotate_script}"}
+    
+    # Build command
+    cmd = [
+        sys.executable,
+        str(annotate_script),
+        "--resource-id", str(resource_id),
+        "--rs-url", base_url,
+        "--rs-api-key", api_key,
+        "--json"
+    ]
+    
+    if use_llm and anthropic_key:
+        cmd.extend(["--api-key", anthropic_key])
+    else:
+        cmd.append("--rules-only")
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minute timeout
+        )
+        
+        if result.returncode == 0:
+            try:
+                output = json.loads(result.stdout)
+                return {
+                    "success": True,
+                    "message": f"Annotated ({output.get('annotated_chars', '?')} chars)",
+                    "rules_applied": output.get("rules_applied", []),
+                    "llm_used": output.get("llm_used", False)
+                }
+            except json.JSONDecodeError:
+                return {"success": True, "message": "Annotation complete"}
+        else:
+            return {
+                "success": False,
+                "message": result.stderr or f"Exit code {result.returncode}"
+            }
+    
+    except subprocess.TimeoutExpired:
+        return {"success": False, "message": "Annotation timed out"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
 def generate_tts_audio(
     base_url: str,
     user: str,
@@ -931,14 +1003,20 @@ Examples:
                        help="Allow overwriting English translation")
     
     # TTS options
+    parser.add_argument("--tts-annotate", action="store_true",
+                       help="Auto-generate TTS Script (Field 107) with emotion tags from Formatted")
+    parser.add_argument("--tts-annotate-llm", action="store_true",
+                       help="Use LLM for TTS annotation (requires ANTHROPIC_API_KEY)")
     parser.add_argument("--generate-tts", action="store_true",
                        help="Generate TTS audio after successful sync")
-    parser.add_argument("--tts-voice", default="rachel",
-                       help="Voice for TTS generation (default: rachel)")
+    parser.add_argument("--tts-voice", default="omi",
+                       help="Voice for TTS generation (default: omi)")
     parser.add_argument("--tts-force", action="store_true",
                        help="Regenerate TTS even if audio exists")
     parser.add_argument("--elevenlabs-key", default=os.getenv("ELEVENLABS_API_KEY"),
                        help="ElevenLabs API key (or ELEVENLABS_API_KEY env var)")
+    parser.add_argument("--anthropic-key", default=os.getenv("ANTHROPIC_API_KEY"),
+                       help="Anthropic API key for TTS annotation (or ANTHROPIC_API_KEY env var)")
     
     # Actions
     parser.add_argument("--status", action="store_true", help="Show current status")
@@ -1033,6 +1111,27 @@ Examples:
                       f"{skipped} skipped, {unchanged} unchanged")
             else:
                 print(f"✗ Sync failed: {', '.join(result.errors)}")
+        
+        # TTS annotation if requested and sync was successful
+        if result.success and args.tts_annotate:
+            logger.info("Starting TTS annotation...")
+            try:
+                annotate_result = annotate_tts_script(
+                    args.url, args.user, args.key,
+                    args.resource_id,
+                    use_llm=args.tts_annotate_llm,
+                    anthropic_key=args.anthropic_key
+                )
+                if annotate_result.get("success"):
+                    if not args.json:
+                        print(f"✓ TTS Script: {annotate_result.get('message', 'Annotation complete')}")
+                else:
+                    if not args.json:
+                        print(f"✗ TTS annotation failed: {annotate_result.get('message', 'Unknown error')}")
+            except Exception as e:
+                logger.error(f"TTS annotation failed: {e}")
+                if not args.json:
+                    print(f"✗ TTS annotation error: {e}")
         
         # Generate TTS if requested and sync was successful
         if result.success and args.generate_tts:
