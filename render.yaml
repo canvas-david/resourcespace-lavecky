@@ -33,7 +33,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile.render
     plan: starter
-    healthCheckPath: /login.php
+    healthCheckPath: /health.php
     envVars:
       - key: DB_HOST
         fromService:
