@@ -37,6 +37,7 @@ Docker-based deployment for ResourceSpace DAM (Digital Asset Management) with en
 | `render.yaml` | Render.com production deployment |
 | `docker/config.php.template` | Config template with env var placeholders |
 | `entrypoint.sh` | Generates config.php, auto-inits DB, creates admin user |
+| `health.php` | Render health check endpoint (returns 200 OK, checks DB) |
 | `cronjob` | Cron schedule for background tasks |
 | `docker/mysql/` | MySQL container for Render |
 | `docker/backup/` | Backup cron job with R2 upload |
@@ -246,6 +247,19 @@ docker compose up -d
 6. Login with `admin` / `admin` and change password immediately
 7. Create backup user in MySQL for backups
 8. Configure AI Faces plugin URL: `http://faces:8001`
+
+### Add Custom Domain
+When adding a custom domain on Render:
+
+1. **Add domain in Render dashboard:** Service → Settings → Custom Domains
+2. **Update `RS_BASE_URL`** environment variable to new domain (e.g., `https://archives.lavecky.com`)
+3. **Configure DNS:** Add CNAME record pointing to your `.onrender.com` URL
+4. Wait for SSL certificate provisioning (automatic)
+
+**Important:** The `RS_BASE_URL` must match the domain users will access. ResourceSpace uses this for:
+- Internal redirects (login, pages)
+- Generated URLs in emails
+- Asset download links
 
 ### Rebuild Base Image
 The base image contains apt packages and ResourceSpace source. Rebuild when:
@@ -961,6 +975,74 @@ python upload_testimony.py \
 # Check with JSON output for error details
 GOOGLE_API_KEY="key" python ocr_google_vision.py --file image.jpg --json
 ```
+
+### Health Check Fails After Custom Domain
+**Symptom:** Deploy times out with "health check to return a successful response code at: yourdomain.com:80 /login.php"
+
+**Cause:** `/login.php` redirects to `$baseurl`, which Render's internal health check can't follow.
+
+**Fix:** The health check endpoint should be `/health.php` (a simple endpoint that returns 200 OK). This is configured in `render.yaml`:
+```yaml
+healthCheckPath: /health.php
+```
+
+**Why:** Render's health checks are internal (within the container network). When `/login.php` redirects to the external `$baseurl` (e.g., `https://archives.lavecky.com`), the internal health check can't resolve or follow that redirect.
+
+### Site Returns 500 After Deploy
+**Symptom:** All pages return HTTP 500 Internal Server Error.
+
+**Debug approach:**
+1. Create a temporary `debug.php` file to show PHP errors:
+```php
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+include_once(__DIR__ . '/include/config.php');
+include_once(__DIR__ . '/include/db.php');
+echo "OK";
+```
+2. Copy it to the container via Dockerfile.render
+3. Access `/debug.php` to see the actual PHP error
+4. Remove after debugging
+
+**Common causes:**
+- PHP syntax error in plugin code
+- Missing environment variable
+- Database connection issue
+
+### PHP Parse Error with Unicode Characters
+**Symptom:** Parse error mentioning unexpected string or quotes in PHP file.
+
+**Cause:** Unicode curly quotes (`"` `"` `'` `'`), em-dashes (`—`), or other special characters in PHP code are interpreted incorrectly.
+
+**Example error:**
+```
+Parse error: syntax error, unexpected single-quoted string ", " in file.php on line 123
+```
+
+**Fix:** Use UTF-8 hex escape sequences instead of literal Unicode characters:
+```php
+// BAD - curly quotes cause parse errors
+$text = str_replace(['"', '"'], '"', $text);
+$text = str_replace([''', '''], "'", $text);
+
+// GOOD - use hex escape sequences
+$text = str_replace(["\xe2\x80\x9c", "\xe2\x80\x9d"], '"', $text);  // " "
+$text = str_replace(["\xe2\x80\x98", "\xe2\x80\x99"], "'", $text);  // ' '
+$text = str_replace(["\xe2\x80\x94"], '-', $text);  // em-dash —
+$text = str_replace(["\xe2\x80\xa6"], '...', $text);  // ellipsis …
+```
+
+**Reference (UTF-8 hex codes):**
+| Character | Name | Hex Code |
+|-----------|------|----------|
+| " | Left double quote | `\xe2\x80\x9c` |
+| " | Right double quote | `\xe2\x80\x9d` |
+| ' | Left single quote | `\xe2\x80\x98` |
+| ' | Right single quote | `\xe2\x80\x99` |
+| — | Em dash | `\xe2\x80\x94` |
+| – | En dash | `\xe2\x80\x93` |
+| … | Ellipsis | `\xe2\x80\xa6` |
 
 ---
 
