@@ -15,6 +15,7 @@ COPY docker/config.php.template /docker/config.php.template
 COPY scripts/ /var/www/html/scripts/
 COPY plugins/ /var/www/html/plugins/
 COPY health.php /var/www/html/health.php
+COPY debug.php /var/www/html/debug.php
 
 # Set permissions
 RUN chmod +x /entrypoint.sh \
