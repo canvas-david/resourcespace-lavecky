@@ -95,9 +95,20 @@ $voice_ids = [
 ];
 
 $voice_id = $voice_ids[$voice] ?? $voice_ids['omi'];
-$model = 'eleven_v3';  // v3 alpha: emotional, expressive, 70+ languages, 5000 char limit
+$model = 'eleven_v3';  // v3: emotional, expressive, 70+ languages
 
-// Chunk the text if needed (v3 has 5000 char limit, we use 4800 for safety)
+// Voice settings optimized for cloned voice accuracy:
+// - Higher similarity_boost (0.85) = closer to original voice
+// - Higher stability (0.65) = more consistent while allowing expression
+// - use_speaker_boost: enhances similarity for cloned voices
+$is_cloned_voice = ($voice === 'omi');
+$voice_settings = [
+    'stability' => $is_cloned_voice ? 0.65 : 0.50,
+    'similarity_boost' => $is_cloned_voice ? 0.85 : 0.75,
+    'use_speaker_boost' => $is_cloned_voice
+];
+
+// Chunk the text if needed (v3 has 5000 char limit)
 $chunks = tts_audio_chunk_text($transcription);
 $total_parts = count($chunks);
 
@@ -106,10 +117,12 @@ $generated_files = [];
 $errors = [];
 
 foreach ($chunks as $part_num => $chunk_text) {
+    // Clean text for TTS
+    $text_to_generate = tts_audio_clean_text($chunk_text);
+    
     // Prepend direction tag if specified
-    $text_to_generate = $chunk_text;
     if (!empty($direction)) {
-        $text_to_generate = $direction . ' ' . $chunk_text;
+        $text_to_generate = $direction . ' ' . $text_to_generate;
     }
     
     // Call ElevenLabs API
@@ -118,11 +131,8 @@ foreach ($chunks as $part_num => $chunk_text) {
     $post_data = json_encode([
         'text' => $text_to_generate,
         'model_id' => $model,
-        'voice_settings' => [
-            'stability' => 0.5,
-            'similarity_boost' => 0.75
-        ]
-    ]);
+        'voice_settings' => $voice_settings
+    ], JSON_UNESCAPED_UNICODE);
     
     $ch = curl_init($api_url);
     curl_setopt_array($ch, [

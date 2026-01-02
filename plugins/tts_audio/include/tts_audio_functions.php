@@ -417,3 +417,40 @@ function tts_audio_delete_all($ref)
     
     return $count;
 }
+
+/**
+ * Clean text for TTS generation
+ * Removes/normalizes characters that can cause issues with ElevenLabs
+ * 
+ * @param string $text Text to clean
+ * @return string Cleaned text
+ */
+function tts_audio_clean_text($text)
+{
+    // Normalize whitespace (multiple spaces/tabs to single space)
+    $text = preg_replace('/[ \t]+/', ' ', $text);
+    
+    // Normalize line breaks (multiple newlines to max 2)
+    $text = preg_replace('/\n{3,}/', "\n\n", $text);
+    
+    // Remove zero-width characters and other invisible Unicode
+    $text = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $text);
+    
+    // Normalize quotes to standard ASCII
+    $text = str_replace(['"', '"', '„', '‟'], '"', $text);
+    $text = str_replace([''', ''', '‚', '‛'], "'", $text);
+    
+    // Normalize dashes
+    $text = str_replace(['—', '–', '‒', '―'], '-', $text);
+    
+    // Normalize ellipsis
+    $text = str_replace('…', '...', $text);
+    
+    // Remove control characters except newlines and tabs
+    $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $text);
+    
+    // Trim whitespace
+    $text = trim($text);
+    
+    return $text;
+}

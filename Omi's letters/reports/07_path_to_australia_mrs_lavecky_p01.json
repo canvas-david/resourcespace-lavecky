@@ -3,6 +3,7 @@
   "models_used": [
     "vision",
     "docai",
+    "claude",
     "gpt"
   ],
   "overall_confidence": 0.2423,
@@ -23,6 +24,12 @@
       "chars": 1377,
       "confidence": 0.0,
       "error": null
+    },
+    "claude": {
+      "success": false,
+      "chars": 0,
+      "confidence": 0.0,
+      "error": "<urlopen error [Errno 32] Broken pipe>"
     },
     "gpt": {
       "success": false,
