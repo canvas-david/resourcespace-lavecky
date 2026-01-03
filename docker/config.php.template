@@ -29,6 +29,16 @@ $openai_gpt_api_key = '${OPENAI_API_KEY}';
 $openai_gpt_model = 'gpt-4o';
 $openai_gpt_fallback_model = 'gpt-3.5-turbo';
 
+// Video Preview Settings
+// Generate browser-compatible H.264/AAC previews for video files
+$video_preview_original = false;  // Don't use original - always transcode for compatibility
+$ffmpeg_preview_extension = 'mp4';
+$ffmpeg_preview_min_width = 480;
+$ffmpeg_preview_min_height = 270;
+$ffmpeg_preview_max_width = 1280;
+$ffmpeg_preview_max_height = 720;
+$ffmpeg_preview_options = '-f mp4 -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart -pix_fmt yuv420p';
+
 // AI Faces (InsightFace) Service
 // Internal Render service address - only accessible from within Render network
 $faces_service_endpoint = 'http://faces-d1tp:8001';
